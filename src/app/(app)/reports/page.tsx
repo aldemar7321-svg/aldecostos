@@ -145,7 +145,6 @@ export default function ReportsPage() {
     doc.save(`reporte_${selectedProduct.name.replace(/ /g, '_')}.pdf`);
   };
 
-
   return (
     <div className="flex flex-col gap-6">
       <PageHeader
@@ -222,13 +221,13 @@ export default function ReportsPage() {
               </div>
               </CardFooter>
           </Card>
-           <Card className="border-green-600">
+           <Card className="border-accent">
               <CardHeader>
-                <CardTitle className="text-green-700">Precio de Venta Sugerido</CardTitle>
+                <CardTitle className="text-accent-foreground">Precio de Venta Sugerido</CardTitle>
                 <CardDescription>
                     Cálculo del precio final basado en tu margen de rentabilidad.
                 </CardDescription>
-              </Header>
+              </CardHeader>
               <CardContent>
                 <Table>
                   <TableHeader>
@@ -265,10 +264,10 @@ export default function ReportsPage() {
                   </TableBody>
                 </Table>
               </CardContent>
-              <CardFooter className="justify-end bg-green-50/50 rounded-b-lg">
+              <CardFooter className="justify-end bg-accent/10 rounded-b-lg">
                 <div className="flex flex-col items-end">
                   <p className="text-muted-foreground">Precio de Venta Sugerido (por lb):</p>
-                  <p className="text-2xl font-bold text-green-700">{formatCurrency(salePrice)}</p>
+                  <p className="text-2xl font-bold text-accent-foreground">{formatCurrency(salePrice)}</p>
                 </div>
               </CardFooter>
             </Card>
