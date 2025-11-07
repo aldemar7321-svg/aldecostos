@@ -9,7 +9,6 @@ import {
   Factory,
   FileText,
   LayoutDashboard,
-  PanelLeft,
   Users,
   Warehouse,
 } from "lucide-react";
@@ -55,16 +54,14 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
           <SidebarMenu>
             {navItems.map((item) => (
               <SidebarMenuItem key={item.href}>
-                <Link href={item.href} passHref>
+                <Link href={item.href} legacyBehavior passHref>
                   <SidebarMenuButton
-                    asChild
+                    as="a"
                     isActive={pathname === item.href}
                     tooltip={item.label}
                   >
-                    <a>
-                      <item.icon />
-                      <span>{item.label}</span>
-                    </a>
+                    <item.icon />
+                    <span>{item.label}</span>
                   </SidebarMenuButton>
                 </Link>
               </SidebarMenuItem>
