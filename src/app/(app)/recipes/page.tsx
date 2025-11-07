@@ -1,17 +1,40 @@
+
 'use client';
 
 import { useState } from 'react';
+import { useForm, useFieldArray } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { inventoryData, productsData } from "@/lib/data";
-import type { Ingredient, Product } from "@/lib/types";
+import type { Ingredient, Product, PriceList } from "@/lib/types";
 import { PageHeader } from "@/components/page-header";
 import { Button } from "@/components/ui/button";
-import { PlusCircle } from "lucide-react";
+import { PlusCircle, Trash2, Edit, MoreHorizontal } from "lucide-react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetFooter, SheetClose } from '@/components/ui/sheet';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
+
 
 const formatCurrency = (value: number) =>
   new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 2 }).format(value);
@@ -26,11 +49,35 @@ const calculateRecipeCost = (recipe: Ingredient[]) => {
   }, 0);
 };
 
+const productFormSchema = z.object({
+  id: z.string(),
+  name: z.string().min(1, "El nombre es requerido."),
+  batchSize: z.coerce.number().positive("El tamaño del lote debe ser positivo."),
+  recipe: z.array(z.object({
+    inventoryId: z.string().min(1),
+    quantity: z.coerce.number().positive(),
+  })),
+  laborProcesses: z.any(),
+});
+
+
 export default function RecipesPage() {
   const [products, setProducts] = useState<Product[]>(productsData);
-  const [isSheetOpen, setIsSheetOpen] = useState(false);
+  const [isAddProductSheetOpen, setIsAddProductSheetOpen] = useState(false);
+  const [isEditProductSheetOpen, setIsEditProductSheetOpen] = useState(false);
+  const [editingProduct, setEditingProduct] = useState<Product | null>(null);
+
   const [newProductName, setNewProductName] = useState('');
   const [newProductBatchSize, setNewProductBatchSize] = useState(0);
+
+  const form = useForm<z.infer<typeof productFormSchema>>({
+    resolver: zodResolver(productFormSchema),
+  });
+
+  const { fields, append, remove, update } = useFieldArray({
+    control: form.control,
+    name: "recipe"
+  });
 
   const handleAddProduct = () => {
     const newProduct: Product = {
@@ -43,7 +90,22 @@ export default function RecipesPage() {
     setProducts(prev => [...prev, newProduct]);
     setNewProductName('');
     setNewProductBatchSize(0);
-    setIsSheetOpen(false);
+    setIsAddProductSheetOpen(false);
+  };
+  
+  const handleEditProductClick = (product: Product) => {
+    setEditingProduct(product);
+    form.reset({
+        ...product,
+        recipe: product.recipe || [],
+    });
+    setIsEditProductSheetOpen(true);
+  };
+
+  const onProductSubmit = (values: z.infer<typeof productFormSchema>) => {
+    setProducts(prev => prev.map(p => p.id === values.id ? { ...p, ...values } : p));
+    setIsEditProductSheetOpen(false);
+    setEditingProduct(null);
   };
   
   return (
@@ -52,7 +114,7 @@ export default function RecipesPage() {
         title="Fórmulas y Costeo de Materia Prima"
         description="Define las recetas para cada uno de tus productos."
       >
-        <Button size="sm" onClick={() => setIsSheetOpen(true)}>
+        <Button size="sm" onClick={() => setIsAddProductSheetOpen(true)}>
           <PlusCircle className="mr-2 h-4 w-4" />
           Añadir Producto
         </Button>
@@ -72,11 +134,17 @@ export default function RecipesPage() {
             return (
               <TabsContent key={product.id} value={product.id}>
                 <Card>
-                  <CardHeader>
-                    <CardTitle>{product.name}</CardTitle>
-                    <CardDescription>
-                      Costeo de materia prima para un lote de producción de {product.batchSize} lbs.
-                    </CardDescription>
+                  <CardHeader className="flex-row items-start justify-between">
+                    <div>
+                      <CardTitle>{product.name}</CardTitle>
+                      <CardDescription>
+                        Costeo de materia prima para un lote de producción de {product.batchSize} lbs.
+                      </CardDescription>
+                    </div>
+                     <Button variant="outline" size="sm" onClick={() => handleEditProductClick(product)}>
+                        <Edit className="mr-2 h-4 w-4" />
+                        Editar Producto
+                      </Button>
                   </CardHeader>
                   <CardContent>
                     <Table>
@@ -103,14 +171,16 @@ export default function RecipesPage() {
                         }) : (
                           <TableRow>
                             <TableCell colSpan={4} className="text-center text-muted-foreground py-8">
-                              Esta receta aún no tiene ingredientes.
+                              Esta receta aún no tiene ingredientes. Añade el primero.
                             </TableCell>
                           </TableRow>
                         )}
                       </TableBody>
                     </Table>
                   </CardContent>
-                  <CardFooter className="flex-col items-end gap-2 sm:flex-row sm:justify-end">
+                  <CardFooter className="flex-col items-end gap-4 sm:flex-row sm:justify-between">
+                      <div className="flex-1">
+                      </div>
                       <div className="flex flex-col items-end">
                         <p className="text-muted-foreground">Costo MP del Lote:</p>
                         <p className="text-xl font-bold">{formatCurrency(totalRecipeCost)}</p>
@@ -134,7 +204,8 @@ export default function RecipesPage() {
         </Card>
       )}
 
-      <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
+      {/* Add Product Sheet */}
+      <Sheet open={isAddProductSheetOpen} onOpenChange={setIsAddProductSheetOpen}>
         <SheetContent>
           <SheetHeader>
             <SheetTitle>Añadir Nuevo Producto</SheetTitle>
@@ -158,7 +229,7 @@ export default function RecipesPage() {
                 id="batch-size"
                 type="number"
                 value={newProductBatchSize}
-                onChange={(e) => setNewProductBatchSize(parseFloat(e.target.value))}
+                onChange={(e) => setNewProductBatchSize(parseFloat(e.target.value) || 0)}
               />
             </div>
           </div>
@@ -170,6 +241,121 @@ export default function RecipesPage() {
           </SheetFooter>
         </SheetContent>
       </Sheet>
+
+      {/* Edit Product Sheet */}
+      <Sheet open={isEditProductSheetOpen} onOpenChange={setIsEditProductSheetOpen}>
+        <SheetContent className="sm:max-w-2xl">
+          <SheetHeader>
+            <SheetTitle>Editar Producto y Receta</SheetTitle>
+            <SheetDescription>
+             Modifica los detalles del producto y gestiona los ingredientes de su receta.
+            </SheetDescription>
+          </SheetHeader>
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onProductSubmit)} className="flex h-full flex-col">
+              <div className="space-y-6 py-6 flex-1 overflow-y-auto pr-6">
+                <FormField
+                  control={form.control}
+                  name="name"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Nombre del Producto</FormLabel>
+                      <FormControl>
+                        <Input {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="batchSize"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Tamaño del Lote (lbs)</FormLabel>
+                      <FormControl>
+                        <Input type="number" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <div>
+                  <h4 className="font-medium mb-2">Ingredientes de la Receta</h4>
+                  <div className="space-y-4">
+                    {fields.map((field, index) => {
+                      const selectedInventoryItem = inventoryData.find(i => i.id === field.inventoryId);
+                      return (
+                        <div key={field.id} className="flex items-end gap-2 p-3 border rounded-lg bg-muted/50">
+                          <FormField
+                            control={form.control}
+                            name={`recipe.${index}.inventoryId`}
+                            render={({ field }) => (
+                              <FormItem className="flex-1">
+                                <FormLabel>Ingrediente</FormLabel>
+                                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                  <FormControl>
+                                    <SelectTrigger>
+                                      <SelectValue placeholder="Selecciona un ingrediente" />
+                                    </SelectTrigger>
+                                  </FormControl>
+                                  <SelectContent>
+                                    {inventoryData.map(item => (
+                                      <SelectItem key={item.id} value={item.id}>
+                                        {item.product}
+                                      </SelectItem>
+                                    ))}
+                                  </SelectContent>
+                                </Select>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                          <FormField
+                            control={form.control}
+                            name={`recipe.${index}.quantity`}
+                            render={({ field }) => (
+                              <FormItem className="w-32">
+                                <FormLabel>Cantidad ({selectedInventoryItem?.measure})</FormLabel>
+                                <FormControl>
+                                  <Input type="number" step="0.01" {...field} />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                          <Button type="button" variant="ghost" size="icon" onClick={() => remove(index)}>
+                            <Trash2 className="h-4 w-4 text-destructive" />
+                          </Button>
+                        </div>
+                      );
+                    })}
+                  </div>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="mt-4"
+                    onClick={() => append({ inventoryId: '', quantity: 1 })}
+                  >
+                    <PlusCircle className="mr-2 h-4 w-4" />
+                    Añadir Ingrediente
+                  </Button>
+                </div>
+              </div>
+
+              <SheetFooter className="pt-6 border-t mt-auto">
+                <SheetClose asChild>
+                  <Button variant="outline">Cancelar</Button>
+                </SheetClose>
+                <Button type="submit">Guardar Cambios</Button>
+              </SheetFooter>
+            </form>
+          </Form>
+        </SheetContent>
+      </Sheet>
     </div>
   );
 }
+
+    
