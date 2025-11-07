@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from 'react';
+import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -13,8 +13,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetFo
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import { useCollection, useUser, useFirestore, useMemoFirebase, addDocumentNonBlocking } from '@/firebase';
-import { collection } from 'firebase/firestore';
+import { inventoryData } from '@/lib/data';
 import type { PriceList } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
 
@@ -30,15 +29,7 @@ const formSchema = z.object({
 
 export default function InventoryPage() {
   const [isSheetOpen, setIsSheetOpen] = useState(false);
-  const { user } = useUser();
-  const firestore = useFirestore();
-
-  const priceListsRef = useMemoFirebase(() => {
-    if (!user || !firestore) return null;
-    return collection(firestore, 'users', user.uid, 'priceLists');
-  }, [user, firestore]);
-
-  const { data: priceLists, isLoading } = useCollection<PriceList>(priceListsRef);
+  const [priceLists, setPriceLists] = useState<PriceList[]>(inventoryData);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -50,9 +41,12 @@ export default function InventoryPage() {
     },
   });
 
-  async function onSubmit(values: z.infer<typeof formSchema>) {
-    if (!priceListsRef) return;
-    addDocumentNonBlocking(priceListsRef, values);
+  function onSubmit(values: z.infer<typeof formSchema>) {
+    const newPriceList: PriceList = {
+        id: `pl-${Date.now()}`,
+        ...values
+    }
+    setPriceLists(prev => [...prev, newPriceList]);
     form.reset();
     setIsSheetOpen(false);
   }
@@ -90,20 +84,7 @@ export default function InventoryPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {isLoading && (
-                <>
-                  <TableRow>
-                    <TableCell colSpan={4}><Skeleton className="h-8 w-full" /></TableCell>
-                  </TableRow>
-                  <TableRow>
-                    <TableCell colSpan={4}><Skeleton className="h-8 w-full" /></TableCell>
-                  </TableRow>
-                  <TableRow>
-                    <TableCell colSpan={4}><Skeleton className="h-8 w-full" /></TableCell>
-                  </TableRow>
-                </>
-              )}
-              {!isLoading && priceLists?.map((item) => (
+              {priceLists?.map((item) => (
                 <TableRow key={item.id}>
                   <TableCell className="font-medium">{item.product}</TableCell>
                   <TableCell className="text-center">{item.measure}</TableCell>
@@ -111,7 +92,7 @@ export default function InventoryPage() {
                   <TableCell className="text-right font-semibold">{formatCurrency(item.unitValue)}</TableCell>
                 </TableRow>
               ))}
-               {!isLoading && priceLists?.length === 0 && (
+               {priceLists?.length === 0 && (
                 <TableRow>
                   <TableCell colSpan={4} className="text-center text-muted-foreground py-8">
                     No has añadido ningún ingrediente todavía.

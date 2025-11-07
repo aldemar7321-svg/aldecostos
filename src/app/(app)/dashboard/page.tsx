@@ -13,7 +13,7 @@ import { ArrowUpRight } from "lucide-react";
 const formatCurrency = (value: number) =>
   new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 }).format(value);
 
-const totalInventoryValue = inventoryData.reduce((sum, item) => sum + (item.purchaseValue), 0);
+const totalInventoryValue = inventoryData.reduce((sum, item) => sum + (item.value), 0);
 const totalMonthlyLabor = laborSettingsData.monthlyCost;
 const totalMonthlyCIF = overheadData.reduce((sum, item) => sum + (item.monthlyValue * item.productionPercentage), 0);
 const firstProduct = productsData[0];
