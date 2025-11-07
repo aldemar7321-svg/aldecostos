@@ -7,13 +7,29 @@ import { z } from 'zod';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Download, PlusCircle } from "lucide-react";
+import { Download, PlusCircle, MoreHorizontal, Trash2, Edit } from "lucide-react";
 import { PageHeader } from "@/components/page-header";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetFooter, SheetClose } from '@/components/ui/sheet';
 import { Input } from '@/components/ui/input';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { inventoryData } from '@/lib/data';
 import type { PriceList } from '@/lib/types';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 
 const formatCurrency = (value: number) =>
   new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 2 }).format(value);
@@ -28,6 +44,10 @@ const formSchema = z.object({
 export default function InventoryPage() {
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [priceLists, setPriceLists] = useState<PriceList[]>(inventoryData);
+  const [editingItem, setEditingItem] = useState<PriceList | null>(null);
+  const [isAlertOpen, setIsAlertOpen] = useState(false);
+  const [itemToDelete, setItemToDelete] = useState<string | null>(null);
+
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -39,14 +59,46 @@ export default function InventoryPage() {
     },
   });
 
-  function onSubmit(values: z.infer<typeof formSchema>) {
-    const newPriceList: PriceList = {
-        id: `pl-${Date.now()}`,
-        ...values
+  const handleAddNew = () => {
+    setEditingItem(null);
+    form.reset({ product: '', measure: '', value: 0, unitValue: 0 });
+    setIsSheetOpen(true);
+  };
+  
+  const handleEdit = (item: PriceList) => {
+    setEditingItem(item);
+    form.reset(item);
+    setIsSheetOpen(true);
+  };
+
+  const handleDeleteConfirmation = (id: string) => {
+    setItemToDelete(id);
+    setIsAlertOpen(true);
+  };
+
+  const handleDelete = () => {
+    if (itemToDelete) {
+      setPriceLists(prev => prev.filter(item => item.id !== itemToDelete));
+      setItemToDelete(null);
     }
-    setPriceLists(prev => [...prev, newPriceList]);
+    setIsAlertOpen(false);
+  };
+
+  function onSubmit(values: z.infer<typeof formSchema>) {
+    if (editingItem) {
+      // Update existing item
+      setPriceLists(prev => prev.map(item => item.id === editingItem.id ? { ...item, ...values } : item));
+    } else {
+      // Add new item
+      const newPriceList: PriceList = {
+          id: `pl-${Date.now()}`,
+          ...values
+      }
+      setPriceLists(prev => [...prev, newPriceList]);
+    }
     form.reset();
     setIsSheetOpen(false);
+    setEditingItem(null);
   }
 
   const handleExport = () => {
@@ -81,7 +133,7 @@ export default function InventoryPage() {
           <Download className="mr-2 h-4 w-4" />
           Exportar
         </Button>
-        <Button size="sm" onClick={() => setIsSheetOpen(true)}>
+        <Button size="sm" onClick={handleAddNew}>
           <PlusCircle className="mr-2 h-4 w-4" />
           Añadir Ingrediente
         </Button>
@@ -101,6 +153,7 @@ export default function InventoryPage() {
                 <TableHead className="text-center">Medida de Compra</TableHead>
                 <TableHead className="text-right">Valor de Compra</TableHead>
                 <TableHead className="text-right font-medium text-primary">Valor Unitario</TableHead>
+                <TableHead className="w-[50px] text-right">Acciones</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -110,11 +163,31 @@ export default function InventoryPage() {
                   <TableCell className="text-center">{item.measure}</TableCell>
                   <TableCell className="text-right">{formatCurrency(item.value)}</TableCell>
                   <TableCell className="text-right font-semibold">{formatCurrency(item.unitValue)}</TableCell>
+                  <TableCell className="text-right">
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" className="h-8 w-8 p-0">
+                          <span className="sr-only">Abrir menu</span>
+                          <MoreHorizontal className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem onClick={() => handleEdit(item)}>
+                          <Edit className="mr-2 h-4 w-4" />
+                          Editar
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => handleDeleteConfirmation(item.id)} className="text-destructive">
+                           <Trash2 className="mr-2 h-4 w-4" />
+                           Eliminar
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </TableCell>
                 </TableRow>
               ))}
                {priceLists?.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={4} className="text-center text-muted-foreground py-8">
+                  <TableCell colSpan={5} className="text-center text-muted-foreground py-8">
                     No has añadido ningún ingrediente todavía.
                   </TableCell>
                 </TableRow>
@@ -126,9 +199,9 @@ export default function InventoryPage() {
        <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
         <SheetContent>
           <SheetHeader>
-            <SheetTitle>Añadir Nuevo Ingrediente</SheetTitle>
+            <SheetTitle>{editingItem ? 'Editar Ingrediente' : 'Añadir Nuevo Ingrediente'}</SheetTitle>
             <SheetDescription>
-              Completa los detalles del nuevo ingrediente o materia prima.
+             {editingItem ? 'Modifica los detalles del ingrediente.' : 'Completa los detalles del nuevo ingrediente o materia prima.'}
             </SheetDescription>
           </SheetHeader>
           <Form {...form}>
@@ -189,12 +262,28 @@ export default function InventoryPage() {
                 <SheetClose asChild>
                   <Button variant="outline">Cancelar</Button>
                 </SheetClose>
-                <Button type="submit">Guardar Ingrediente</Button>
+                <Button type="submit">{editingItem ? 'Guardar Cambios' : 'Guardar Ingrediente'}</Button>
               </SheetFooter>
             </form>
           </Form>
         </SheetContent>
       </Sheet>
+      <AlertDialog open={isAlertOpen} onOpenChange={setIsAlertOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta acción no se puede deshacer. Esto eliminará permanentemente el ingrediente.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDelete} className="bg-destructive hover:bg-destructive/90">
+              Sí, eliminar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
