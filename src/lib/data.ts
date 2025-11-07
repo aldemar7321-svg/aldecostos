@@ -1,13 +1,13 @@
-import type { InventoryItem, Product, LaborSettings, OverheadItem } from './types';
+import type { PriceList, Product, LaborSettings, OverheadItem } from './types';
 
-export const inventoryData: InventoryItem[] = [
-  { id: '1', name: 'Harina', unit: 'lb', purchaseValue: 50, unitValue: 1.0 },
-  { id: '2', name: 'Azúcar', unit: 'lb', purchaseValue: 30, unitValue: 0.6 },
-  { id: '3', name: 'Huevos', unit: 'unid', purchaseValue: 15, unitValue: 0.25 },
-  { id: '4', name: 'Levadura', unit: 'lb', purchaseValue: 5, unitValue: 5.0 },
-  { id: '5', name: 'Sal', unit: 'lb', purchaseValue: 2, unitValue: 0.5 },
-  { id: '6', name: 'Mantequilla', unit: 'lb', purchaseValue: 20, unitValue: 4.0 },
-  { id: '7', name: 'Leche', unit: 'lt', purchaseValue: 4, unitValue: 1.0 },
+export const inventoryData: PriceList[] = [
+  { id: '1', product: 'Harina', measure: 'lb', value: 50, unitValue: 1.0 },
+  { id: '2', product: 'Azúcar', measure: 'lb', value: 30, unitValue: 0.6 },
+  { id: '3', product: 'Huevos', measure: 'unid', value: 15, unitValue: 0.25 },
+  { id: '4', product: 'Levadura', measure: 'lb', value: 5, unitValue: 5.0 },
+  { id: '5', product: 'Sal', measure: 'lb', value: 2, unitValue: 0.5 },
+  { id: '6', product: 'Mantequilla', measure: 'lb', value: 20, unitValue: 4.0 },
+  { id: '7', product: 'Leche', measure: 'lt', value: 4, unitValue: 1.0 },
 ];
 
 export const productsData: Product[] = [

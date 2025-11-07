@@ -1,8 +1,8 @@
-export interface InventoryItem {
+export interface PriceList {
   id: string;
-  name: string; 
-  unit: string;
-  purchaseValue: number;
+  product: string; 
+  measure: string;
+  value: number;
   unitValue: number; 
 }
 
@@ -20,7 +20,7 @@ export interface LaborProcess {
 }
 
 export interface Product {
-  id: string;
+  id:string;
   name: string;
   batchSize: number;
   recipe: Ingredient[];

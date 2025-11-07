@@ -67,8 +67,8 @@ export default function RecipesPage() {
                         const totalValue = item ? item.unitValue * ingredient.quantity : 0;
                         return (
                           <TableRow key={index}>
-                            <TableCell className="font-medium">{item?.name || 'N/A'}</TableCell>
-                            <TableCell className="text-right">{ingredient.quantity.toFixed(2)} {item?.unit}</TableCell>
+                            <TableCell className="font-medium">{item?.product || 'N/A'}</TableCell>
+                            <TableCell className="text-right">{ingredient.quantity.toFixed(2)} {item?.measure}</TableCell>
                             <TableCell className="text-right">{formatCurrency(item?.unitValue || 0)}</TableCell>
                             <TableCell className="text-right">{formatCurrency(totalValue)}</TableCell>
                           </TableRow>

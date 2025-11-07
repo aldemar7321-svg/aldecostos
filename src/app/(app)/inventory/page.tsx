@@ -1,26 +1,73 @@
+"use client";
+
+import { useState, useMemo } from 'react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { inventoryData } from "@/lib/data";
 import { Download, PlusCircle } from "lucide-react";
 import { PageHeader } from "@/components/page-header";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetFooter, SheetClose } from '@/components/ui/sheet';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { useCollection, useUser, useFirestore, useMemoFirebase, addDocumentNonBlocking } from '@/firebase';
+import { collection } from 'firebase/firestore';
+import type { PriceList } from '@/lib/types';
+import { Skeleton } from '@/components/ui/skeleton';
 
 const formatCurrency = (value: number) =>
   new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 2 }).format(value);
 
+const formSchema = z.object({
+  product: z.string().min(1, "El nombre del producto es requerido."),
+  measure: z.string().min(1, "La unidad de medida es requerida."),
+  value: z.coerce.number().positive("El valor debe ser un número positivo."),
+  unitValue: z.coerce.number().positive("El valor unitario debe ser un número positivo."),
+});
 
 export default function InventoryPage() {
+  const [isSheetOpen, setIsSheetOpen] = useState(false);
+  const { user } = useUser();
+  const firestore = useFirestore();
+
+  const priceListsRef = useMemoFirebase(() => {
+    if (!user || !firestore) return null;
+    return collection(firestore, 'users', user.uid, 'priceLists');
+  }, [user, firestore]);
+
+  const { data: priceLists, isLoading } = useCollection<PriceList>(priceListsRef);
+
+  const form = useForm<z.infer<typeof formSchema>>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      product: '',
+      measure: '',
+      value: 0,
+      unitValue: 0,
+    },
+  });
+
+  async function onSubmit(values: z.infer<typeof formSchema>) {
+    if (!priceListsRef) return;
+    addDocumentNonBlocking(priceListsRef, values);
+    form.reset();
+    setIsSheetOpen(false);
+  }
+
   return (
     <div className="flex flex-col gap-6">
       <PageHeader
         title="Inventario de Materia Prima"
         description="Gestiona la lista de precios de tus ingredientes."
       >
-        <Button variant="outline" size="sm">
+        <Button variant="outline" size="sm" disabled>
           <Download className="mr-2 h-4 w-4" />
           Exportar
         </Button>
-        <Button size="sm">
+        <Button size="sm" onClick={() => setIsSheetOpen(true)}>
           <PlusCircle className="mr-2 h-4 w-4" />
           Añadir Ingrediente
         </Button>
@@ -33,30 +80,120 @@ export default function InventoryPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="relative w-full overflow-auto">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Producto</TableHead>
-                  <TableHead className="text-center">Medida de Compra</TableHead>
-                  <TableHead className="text-right">Valor de Compra</TableHead>
-                  <TableHead className="text-right font-medium text-primary">Valor Unitario</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {inventoryData.map((item) => (
-                  <TableRow key={item.id}>
-                    <TableCell className="font-medium">{item.name}</TableCell>
-                    <TableCell className="text-center">{item.unit}</TableCell>
-                    <TableCell className="text-right">{formatCurrency(item.purchaseValue)}</TableCell>
-                    <TableCell className="text-right font-semibold">{formatCurrency(item.unitValue)}</TableCell>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Producto</TableHead>
+                <TableHead className="text-center">Medida de Compra</TableHead>
+                <TableHead className="text-right">Valor de Compra</TableHead>
+                <TableHead className="text-right font-medium text-primary">Valor Unitario</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {isLoading && (
+                <>
+                  <TableRow>
+                    <TableCell colSpan={4}><Skeleton className="h-8 w-full" /></TableCell>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
+                  <TableRow>
+                    <TableCell colSpan={4}><Skeleton className="h-8 w-full" /></TableCell>
+                  </TableRow>
+                  <TableRow>
+                    <TableCell colSpan={4}><Skeleton className="h-8 w-full" /></TableCell>
+                  </TableRow>
+                </>
+              )}
+              {!isLoading && priceLists?.map((item) => (
+                <TableRow key={item.id}>
+                  <TableCell className="font-medium">{item.product}</TableCell>
+                  <TableCell className="text-center">{item.measure}</TableCell>
+                  <TableCell className="text-right">{formatCurrency(item.value)}</TableCell>
+                  <TableCell className="text-right font-semibold">{formatCurrency(item.unitValue)}</TableCell>
+                </TableRow>
+              ))}
+               {!isLoading && priceLists?.length === 0 && (
+                <TableRow>
+                  <TableCell colSpan={4} className="text-center text-muted-foreground py-8">
+                    No has añadido ningún ingrediente todavía.
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
         </CardContent>
       </Card>
+       <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
+        <SheetContent>
+          <SheetHeader>
+            <SheetTitle>Añadir Nuevo Ingrediente</SheetTitle>
+            <SheetDescription>
+              Completa los detalles del nuevo ingrediente o materia prima.
+            </SheetDescription>
+          </SheetHeader>
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 py-6">
+              <FormField
+                control={form.control}
+                name="product"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Nombre del Producto</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Ej: Harina de trigo" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="measure"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Medida de Compra</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Ej: lb, kg, unid." {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="value"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Valor de Compra</FormLabel>
+                    <FormControl>
+                      <Input type="number" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="unitValue"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Valor Unitario</FormLabel>
+                    <FormControl>
+                      <Input type="number" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <SheetFooter className="pt-6">
+                <SheetClose asChild>
+                  <Button variant="outline">Cancelar</Button>
+                </SheetClose>
+                <Button type="submit">Guardar Ingrediente</Button>
+              </SheetFooter>
+            </form>
+          </Form>
+        </SheetContent>
+      </Sheet>
     </div>
   );
 }
