@@ -1,0 +1,447 @@
+{
+  "entities": {
+    "User": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "User",
+      "type": "object",
+      "description": "Represents a user in the ProdCost Pro application.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the user.",
+          "format": "uuid"
+        },
+        "email": {
+          "type": "string",
+          "description": "Email address of the user.",
+          "format": "email"
+        },
+        "isVerified": {
+          "type": "boolean",
+          "description": "Indicates whether the user's email has been verified."
+        },
+        "verificationToken": {
+          "type": "string",
+          "description": "Token used for email verification."
+        },
+        "resetPasswordToken": {
+          "type": "string",
+          "description": "Token used for resetting the password.",
+          "format": "uuid"
+        },
+        "resetPasswordExpires": {
+          "type": "string",
+          "description": "Expiration date and time for the reset password token.",
+          "format": "date-time"
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Timestamp indicating when the user was created.",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "Timestamp indicating when the user was last updated.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "email",
+        "isVerified"
+      ]
+    },
+    "PriceList": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "PriceList",
+      "type": "object",
+      "description": "Represents the price list of raw materials.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the price list entry."
+        },
+        "product": {
+          "type": "string",
+          "description": "Name of the raw material/ingredient."
+        },
+        "measure": {
+          "type": "string",
+          "description": "Unit of measure (lb, unid, lt, etc.)."
+        },
+        "value": {
+          "type": "number",
+          "description": "Total cost of the purchase (e.g., for a bulk or package)."
+        },
+        "unitValue": {
+          "type": "number",
+          "description": "Real unit cost per standard unit of measure."
+        }
+      },
+      "required": [
+        "id",
+        "product",
+        "measure",
+        "value",
+        "unitValue"
+      ]
+    },
+    "RawMaterial": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "RawMaterial",
+      "type": "object",
+      "description": "Represents the raw materials used in recipes.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the raw material entry."
+        },
+        "className": {
+          "type": "string",
+          "description": "Name of the final product (e.g., Pan Dulce)."
+        },
+        "quantityToMake": {
+          "type": "number",
+          "description": "Size of the production batch."
+        },
+        "ingredient": {
+          "type": "string",
+          "description": "Raw material needed for the recipe."
+        },
+        "formula": {
+          "type": "number",
+          "description": "Exact quantity required of the ingredient for the batch."
+        },
+        "unitValue": {
+          "type": "number",
+          "description": "Unit value of the ingredient (fetched from PriceList)."
+        },
+        "totalValue": {
+          "type": "number",
+          "description": "Total value of the ingredient (Formula x UnitValue)."
+        }
+      },
+      "required": [
+        "id",
+        "className",
+        "quantityToMake",
+        "ingredient",
+        "formula",
+        "unitValue",
+        "totalValue"
+      ]
+    },
+    "LaborCost": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "LaborCost",
+      "type": "object",
+      "description": "Represents the labor costs associated with production.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the labor cost entry."
+        },
+        "monthlyCost": {
+          "type": "number",
+          "description": "Monthly cost of labor (Salaries + benefits)."
+        },
+        "totalHoursWorked": {
+          "type": "number",
+          "description": "Total hours worked in the month."
+        },
+        "hoursPerDay": {
+          "type": "number",
+          "description": "Hours of work per day."
+        },
+        "dailyRate": {
+          "type": "number",
+          "description": "Calculated daily rate based on monthly cost and hours."
+        },
+        "hourlyRate": {
+          "type": "number",
+          "description": "Calculated hourly rate."
+        },
+        "minuteRate": {
+          "type": "number",
+          "description": "Calculated rate per minute."
+        }
+      },
+      "required": [
+        "id",
+        "monthlyCost",
+        "totalHoursWorked",
+        "hoursPerDay",
+        "dailyRate",
+        "hourlyRate",
+        "minuteRate"
+      ]
+    },
+    "ProductionProcess": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "ProductionProcess",
+      "type": "object",
+      "description": "Represents the individual processes involved in production.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the production process entry."
+        },
+        "laborCostId": {
+          "type": "string",
+          "description": "Reference to LaborCost. (Relationship: LaborCost 1:N ProductionProcess)"
+        },
+        "process": {
+          "type": "string",
+          "description": "Specific step of the production (e.g., Amasar, Hornear)."
+        },
+        "time": {
+          "type": "number",
+          "description": "Duration of the process."
+        },
+        "numberOfOperators": {
+          "type": "number",
+          "description": "Number of people involved in the process."
+        },
+        "value": {
+          "type": "number",
+          "description": "Calculated cost of the process (Time x Rate x Number of Operators)."
+        }
+      },
+      "required": [
+        "id",
+        "laborCostId",
+        "process",
+        "time",
+        "numberOfOperators",
+        "value"
+      ]
+    },
+    "OverheadCost": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "OverheadCost",
+      "type": "object",
+      "description": "Represents the overhead costs associated with production.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the overhead cost entry."
+        },
+        "concept": {
+          "type": "string",
+          "description": "Monthly expense (Rent, Electricity, Gas, etc.)."
+        },
+        "value": {
+          "type": "number",
+          "description": "Total monthly amount of the expense."
+        },
+        "productionPercentage": {
+          "type": "number",
+          "description": "Percentage of the expense allocated to production."
+        },
+        "totalCIF": {
+          "type": "number",
+          "description": "Calculated total CIF (Value x ProductionPercentage)."
+        }
+      },
+      "required": [
+        "id",
+        "concept",
+        "value",
+        "productionPercentage",
+        "totalCIF"
+      ]
+    },
+    "ConsolidatedResult": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "ConsolidatedResult",
+      "type": "object",
+      "description": "Represents the consolidated results of production costs.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the consolidated result entry."
+        },
+        "rawMaterialCost": {
+          "type": "number",
+          "description": "Cost of raw materials for the batch."
+        },
+        "laborCost": {
+          "type": "number",
+          "description": "Cost of labor for the batch."
+        },
+        "cifCost": {
+          "type": "number",
+          "description": "Cost of overhead for the batch (Tasa CIF x Total Labor Hours)."
+        },
+        "totalCost": {
+          "type": "number",
+          "description": "Total cost of production (RawMaterialCost + LaborCost + CIFCost)."
+        },
+        "unitCost": {
+          "type": "number",
+          "description": "Cost per unit produced."
+        },
+        "cifRate": {
+          "type": "number",
+          "description": "Overhead rate of production (CIF Total / Total Labor Hours)."
+        }
+      },
+      "required": [
+        "id",
+        "rawMaterialCost",
+        "laborCost",
+        "cifCost",
+        "totalCost",
+        "unitCost",
+        "cifRate"
+      ]
+    }
+  },
+  "auth": {
+    "providers": [
+      "password",
+      "anonymous"
+    ]
+  },
+  "firestore": {
+    "structure": [
+      {
+        "path": "/users/{userId}",
+        "definition": {
+          "entityName": "User",
+          "schema": {
+            "$ref": "#/backend/entities/User"
+          },
+          "description": "Collection to store user profile data. Only the authenticated user can access their own profile.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier of the user."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}/priceLists/{priceListId}",
+        "definition": {
+          "entityName": "PriceList",
+          "schema": {
+            "$ref": "#/backend/entities/PriceList"
+          },
+          "description": "Collection to store price lists. Only the authenticated user can access their own price lists.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier of the user."
+            },
+            {
+              "name": "priceListId",
+              "description": "The unique identifier of the price list entry."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}/rawMaterials/{rawMaterialId}",
+        "definition": {
+          "entityName": "RawMaterial",
+          "schema": {
+            "$ref": "#/backend/entities/RawMaterial"
+          },
+          "description": "Collection to store raw materials data. Only the authenticated user can access their own raw materials.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier of the user."
+            },
+            {
+              "name": "rawMaterialId",
+              "description": "The unique identifier of the raw material entry."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}/laborCosts/{laborCostId}",
+        "definition": {
+          "entityName": "LaborCost",
+          "schema": {
+            "$ref": "#/backend/entities/LaborCost"
+          },
+          "description": "Collection to store labor costs data. Only the authenticated user can access their own labor costs.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier of the user."
+            },
+            {
+              "name": "laborCostId",
+              "description": "The unique identifier of the labor cost entry."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}/productionProcesses/{productionProcessId}",
+        "definition": {
+          "entityName": "ProductionProcess",
+          "schema": {
+            "$ref": "#/backend/entities/ProductionProcess"
+          },
+          "description": "Collection to store production processes data. Only the authenticated user can access their own production processes.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier of the user."
+            },
+            {
+              "name": "productionProcessId",
+              "description": "The unique identifier of the production process entry."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}/overheadCosts/{overheadCostId}",
+        "definition": {
+          "entityName": "OverheadCost",
+          "schema": {
+            "$ref": "#/backend/entities/OverheadCost"
+          },
+          "description": "Collection to store overhead costs data. Only the authenticated user can access their own overhead costs.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier of the user."
+            },
+            {
+              "name": "overheadCostId",
+              "description": "The unique identifier of the overhead cost entry."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}/consolidatedResults/{consolidatedResultId}",
+        "definition": {
+          "entityName": "ConsolidatedResult",
+          "schema": {
+            "$ref": "#/backend/entities/ConsolidatedResult"
+          },
+          "description": "Collection to store consolidated results data. Only the authenticated user can access their own consolidated results.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier of the user."
+            },
+            {
+              "name": "consolidatedResultId",
+              "description": "The unique identifier of the consolidated result entry."
+            }
+          ]
+        }
+      }
+    ],
+    "reasoning": "The Firestore structure is designed to support the ProdCost Pro application, focusing on cost management for production. It adheres to the principles of Authorization Independence, Structural Segregation, and Access Modeling to ensure security and scalability.\n\n**Authorization Independence:**\n\n*   User-specific data like Price Lists, Raw Materials, Labor Costs, Production Processes, Overhead Costs, and Consolidated Results are stored under the `/users/{userId}` path. This ensures that access is restricted to the user who owns the data. There is no reliance on parent document data for authorization.\n\n**Structural Segregation:**\n\n*   Each entity (PriceList, RawMaterial, LaborCost, etc.) has its own collection under the user's document. This ensures that each collection has a homogeneous security posture, simplifying security rules.\n\n**Access Modeling:**\n\n*   Private Data: Uses Path-Based ownership (`/users/{userId}/...`). Each user has their own data.\n\n**QAPs (Rules are not Filters):**\n\n*   The structure enables secure `list` operations because each collection is scoped to a specific user (`/users/{userId}`). Security rules can easily check if `request.auth.uid == userId` to allow listing of documents within that collection. Additionally, segregating data into separate collections based on entity type (e.g., `priceLists`, `rawMaterials`) ensures that rules can be narrowly defined for each data type, preventing over-fetching or unauthorized access.\n\nThis design ensures that security rules are simple, robust, and easily debuggable. It also allows for atomic operations (transactions/batches) without the risk of breaking due to hierarchical authorization dependencies."
+  }
+}
