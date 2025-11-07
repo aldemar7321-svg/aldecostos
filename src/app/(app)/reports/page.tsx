@@ -1,13 +1,15 @@
 "use client";
 
 import { useState } from 'react';
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { inventoryData, productsData, laborSettingsData, overheadData } from "@/lib/data";
 import { PageHeader } from "@/components/page-header";
 import { Button } from "@/components/ui/button";
-import { Download } from "lucide-react";
+import { Download, FileText } from "lucide-react";
 import type { Product } from '@/lib/types';
 import { Label } from '@/components/ui/label';
 
@@ -18,7 +20,6 @@ const inventoryMap = new Map(inventoryData.map(item => [item.id, item]));
 
 // Pre-calculate rates
 const hourRate = laborSettingsData.totalMonthlyHours > 0 ? laborSettingsData.monthlyCost / laborSettingsData.totalMonthlyHours : 0;
-const minuteRate = hourRate / 60;
 const totalCIF = overheadData.reduce((acc, item) => acc + item.monthlyValue * item.productionPercentage, 0);
 const cifRate = laborSettingsData.totalMonthlyHours > 0 ? totalCIF / laborSettingsData.totalMonthlyHours : 0;
 
@@ -51,6 +52,77 @@ export default function ReportsPage() {
   };
 
   const { rawMaterialCost, laborCost, overheadCost, totalCost, unitCost } = calculateCosts(selectedProduct);
+  
+  const handleExportCsv = () => {
+    const headers = ["Componente de Costo", "Costo del Lote"];
+    const data = [
+      ["Materia Prima", rawMaterialCost],
+      ["Mano de Obra", laborCost],
+      ["Costos Indirectos de Fabricación (CIF)", overheadCost],
+      ["Costo Total del Lote (CTP)", totalCost],
+      ["Costo Unitario de Producción (por lb)", unitCost]
+    ];
+
+    const csvContent = [
+      headers.join(','),
+      ...data.map(row => row.join(','))
+    ].join('\n');
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    link.href = url;
+    link.setAttribute('download', `reporte_${selectedProduct?.name.replace(/ /g, '_')}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+  
+  const handleExportPdf = () => {
+    if(!selectedProduct) return;
+
+    const doc = new jsPDF();
+    
+    // Header
+    doc.setFontSize(20);
+    doc.text("ProdCost Pro", 14, 22);
+    doc.setFontSize(12);
+    doc.text("Reporte de Costo de Producción", 14, 30);
+
+    // Product Info
+    doc.setFontSize(14);
+    doc.text(`Producto: ${selectedProduct.name}`, 14, 45);
+    doc.setFontSize(10);
+    doc.text(`Tamaño del Lote: ${selectedProduct.batchSize} lbs`, 14, 52);
+
+    // Table
+    autoTable(doc, {
+      startY: 60,
+      head: [['Componente de Costo', 'Costo del Lote']],
+      body: [
+        ['Materia Prima', formatCurrency(rawMaterialCost)],
+        ['Mano de Obra', formatCurrency(laborCost)],
+        ['Costos Indirectos de Fabricación (CIF)', formatCurrency(overheadCost)],
+      ],
+      foot: [
+        [{ content: 'Costo Total del Lote (CTP)', styles: { fontStyle: 'bold' } }, { content: formatCurrency(totalCost), styles: { fontStyle: 'bold' } }],
+      ],
+      theme: 'striped',
+      headStyles: { fillColor: [41, 128, 185] }
+    });
+
+    // Unit Cost
+    const finalY = (doc as any).lastAutoTable.finalY;
+    doc.setFontSize(12);
+    doc.text("Costo Unitario de Producción (por lb):", 14, finalY + 15);
+    doc.setFontSize(16);
+    doc.setFont('helvetica', 'bold');
+    doc.text(formatCurrency(unitCost), 14, finalY + 22);
+
+
+    doc.save(`reporte_${selectedProduct.name.replace(/ /g, '_')}.pdf`);
+  };
+
 
   return (
     <div className="flex flex-col gap-6">
@@ -58,9 +130,13 @@ export default function ReportsPage() {
         title="Resultados y Consolidación"
         description="Visualiza el costo total de producción para tus productos."
       >
-        <Button variant="outline" size="sm">
+        <Button variant="outline" size="sm" onClick={handleExportCsv}>
           <Download className="mr-2 h-4 w-4" />
           Exportar CSV
+        </Button>
+         <Button size="sm" onClick={handleExportPdf}>
+          <FileText className="mr-2 h-4 w-4" />
+          Generar PDF
         </Button>
       </PageHeader>
       
@@ -125,4 +201,3 @@ export default function ReportsPage() {
     </div>
   );
 }
-

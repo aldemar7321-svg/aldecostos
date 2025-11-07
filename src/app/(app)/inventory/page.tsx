@@ -11,11 +11,9 @@ import { Download, PlusCircle } from "lucide-react";
 import { PageHeader } from "@/components/page-header";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetFooter, SheetClose } from '@/components/ui/sheet';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { inventoryData } from '@/lib/data';
 import type { PriceList } from '@/lib/types';
-import { Skeleton } from '@/components/ui/skeleton';
 
 const formatCurrency = (value: number) =>
   new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 2 }).format(value);
@@ -51,13 +49,35 @@ export default function InventoryPage() {
     setIsSheetOpen(false);
   }
 
+  const handleExport = () => {
+    const headers = ["Producto", "Medida de Compra", "Valor de Compra", "Valor Unitario"];
+    const csvContent = [
+      headers.join(','),
+      ...priceLists.map(item => 
+        [item.product, item.measure, item.value, item.unitValue].join(',')
+      )
+    ].join('\n');
+    
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    if (link.href) {
+      URL.revokeObjectURL(link.href);
+    }
+    const url = URL.createObjectURL(blob);
+    link.href = url;
+    link.setAttribute('download', 'inventario.csv');
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   return (
     <div className="flex flex-col gap-6">
       <PageHeader
         title="Inventario de Materia Prima"
         description="Gestiona la lista de precios de tus ingredientes."
       >
-        <Button variant="outline" size="sm" disabled>
+        <Button variant="outline" size="sm" onClick={handleExport}>
           <Download className="mr-2 h-4 w-4" />
           Exportar
         </Button>
