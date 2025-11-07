@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState } from 'react';
@@ -177,17 +176,6 @@ export default function ReportsPage() {
             </SelectContent>
           </Select>
         </div>
-         <div className="flex items-center gap-2">
-          <Label htmlFor="profit-percentage" className="shrink-0">% de Rentabilidad:</Label>
-          <Input 
-            id="profit-percentage"
-            type="number"
-            value={profitPercentage * 100}
-            onChange={e => setProfitPercentage(parseFloat(e.target.value) / 100)}
-            className="w-full sm:w-[120px]"
-            placeholder="Ej: 30"
-          />
-        </div>
       </div>
 
       {selectedProduct && (
@@ -240,7 +228,7 @@ export default function ReportsPage() {
                 <CardDescription>
                     Cálculo del precio final basado en tu margen de rentabilidad.
                 </CardDescription>
-              </CardHeader>
+              </Header>
               <CardContent>
                 <Table>
                   <TableHeader>
@@ -255,8 +243,20 @@ export default function ReportsPage() {
                       <TableCell className="text-right">{formatCurrency(unitCost)}</TableCell>
                     </TableRow>
                     <TableRow>
-                      <TableCell>Margen de Rentabilidad Deseado</TableCell>
-                      <TableCell className="text-right">{formatPercentage(profitPercentage)}</TableCell>
+                      <TableCell className="font-medium">Margen de Rentabilidad Deseado</TableCell>
+                      <TableCell className="text-right">
+                         <div className="flex items-center justify-end gap-2">
+                            <Input 
+                              id="profit-percentage"
+                              type="number"
+                              value={profitPercentage * 100}
+                              onChange={e => setProfitPercentage(parseFloat(e.target.value) / 100)}
+                              className="w-20 h-8 text-right"
+                              placeholder="Ej: 30"
+                            />
+                            <span>%</span>
+                         </div>
+                      </TableCell>
                     </TableRow>
                      <TableRow>
                       <TableCell>Utilidad Estimada por Unidad</TableCell>
@@ -277,4 +277,3 @@ export default function ReportsPage() {
     </div>
   );
 }
-
