@@ -1,4 +1,3 @@
-"use client"
 
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
@@ -113,18 +112,18 @@ export default function DashboardPage() {
           <p className="text-sm text-muted-foreground">Ejemplo de cálculo de costos para un lote de {firstProduct.batchSize} lbs.</p>
         </CardHeader>
         <CardContent>
-          <ChartContainer config={chartConfig} className="min-h-[200px] w-full">
-            <BarChart accessibilityLayer data={chartData}>
-              <CartesianGrid vertical={false} />
-              <XAxis dataKey="name" tickLine={false} tickMargin={10} axisLine={false} />
-              <YAxis tickFormatter={(value) => formatCurrency(Number(value))} />
-              <ChartTooltip
-                cursor={false}
-                content={<ChartTooltipContent formatter={(value) => formatCurrency(Number(value))} />}
-              />
-              <Bar dataKey="cost" radius={8} />
-            </BarChart>
-          </ChartContainer>
+            <ChartContainer config={chartConfig} className="min-h-[200px] w-full">
+                <BarChart accessibilityLayer data={chartData}>
+                    <CartesianGrid vertical={false} />
+                    <XAxis dataKey="name" tickLine={false} tickMargin={10} axisLine={false} />
+                    <YAxis tickFormatter={(value) => formatCurrency(Number(value))} />
+                    <ChartTooltip
+                        cursor={false}
+                        content={<ChartTooltipContent formatter={(value) => formatCurrency(Number(value))} />}
+                    />
+                    <Bar dataKey="cost" radius={8} />
+                </BarChart>
+            </ChartContainer>
         </CardContent>
          <CardFooter className="flex-row-reverse">
           <Button asChild variant="ghost" size="sm">

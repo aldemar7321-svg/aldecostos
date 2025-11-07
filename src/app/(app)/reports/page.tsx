@@ -78,48 +78,51 @@ export default function ReportsPage() {
         </Select>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Costo Total de Producción (CTP): {selectedProduct?.name}</CardTitle>
-          <CardDescription>
-            Costo consolidado para un lote de {selectedProduct?.batchSize} lbs.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Componente de Costo</TableHead>
-                <TableHead className="text-right">Costo del Lote</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              <TableRow>
-                <TableCell className="font-medium">Materia Prima</TableCell>
-                <TableCell className="text-right">{formatCurrency(rawMaterialCost)}</TableCell>
-              </TableRow>
-              <TableRow>
-                <TableCell className="font-medium">Mano de Obra</TableCell>
-                <TableCell className="text-right">{formatCurrency(laborCost)}</TableCell>
-              </TableRow>
-              <TableRow>
-                <TableCell className="font-medium">Costos Indirectos de Fabricación (CIF)</TableCell>
-                <TableCell className="text-right">{formatCurrency(overheadCost)}</TableCell>
-              </TableRow>
-              <TableRow className="bg-muted/50">
-                <TableHead>Costo Total del Lote (CTP)</TableHead>
-                <TableHead className="text-right font-bold text-lg">{formatCurrency(totalCost)}</TableHead>
-              </TableRow>
-            </TableBody>
-          </Table>
-        </CardContent>
-        <CardFooter className="justify-end">
-          <div className="flex flex-col items-end">
-            <p className="text-muted-foreground">Costo Unitario de Producción (por lb):</p>
-            <p className="text-2xl font-bold text-primary">{formatCurrency(unitCost)}</p>
-          </div>
-        </CardFooter>
-      </Card>
+      {selectedProduct && (
+        <Card>
+            <CardHeader>
+            <CardTitle>Costo Total de Producción (CTP): {selectedProduct.name}</CardTitle>
+            <CardDescription>
+                Costo consolidado para un lote de {selectedProduct.batchSize} lbs.
+            </CardDescription>
+            </CardHeader>
+            <CardContent>
+            <Table>
+                <TableHeader>
+                <TableRow>
+                    <TableHead>Componente de Costo</TableHead>
+                    <TableHead className="text-right">Costo del Lote</TableHead>
+                </TableRow>
+                </TableHeader>
+                <TableBody>
+                <TableRow>
+                    <TableCell className="font-medium">Materia Prima</TableCell>
+                    <TableCell className="text-right">{formatCurrency(rawMaterialCost)}</TableCell>
+                </TableRow>
+                <TableRow>
+                    <TableCell className="font-medium">Mano de Obra</TableCell>
+                    <TableCell className="text-right">{formatCurrency(laborCost)}</TableCell>
+                </TableRow>
+                <TableRow>
+                    <TableCell className="font-medium">Costos Indirectos de Fabricación (CIF)</TableCell>
+                    <TableCell className="text-right">{formatCurrency(overheadCost)}</TableCell>
+                </TableRow>
+                <TableRow className="bg-muted/50">
+                    <TableHead>Costo Total del Lote (CTP)</TableHead>
+                    <TableHead className="text-right font-bold text-lg">{formatCurrency(totalCost)}</TableHead>
+                </TableRow>
+                </TableBody>
+            </Table>
+            </CardContent>
+            <CardFooter className="justify-end">
+            <div className="flex flex-col items-end">
+                <p className="text-muted-foreground">Costo Unitario de Producción (por lb):</p>
+                <p className="text-2xl font-bold text-primary">{formatCurrency(unitCost)}</p>
+            </div>
+            </CardFooter>
+        </Card>
+      )}
     </div>
   );
 }
+
