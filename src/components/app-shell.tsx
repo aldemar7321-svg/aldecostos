@@ -2,13 +2,14 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import {
   BookHeart,
   Boxes,
   Factory,
   FileText,
   LayoutDashboard,
+  LogOut,
   Users,
   Warehouse,
 } from "lucide-react";
@@ -26,6 +27,16 @@ import {
 } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { useAuth, useUser } from "@/firebase";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { signOut } from "firebase/auth";
 
 const navItems = [
   { href: "/dashboard", icon: LayoutDashboard, label: "Dashboard" },
@@ -38,6 +49,27 @@ const navItems = [
 
 export default function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const { user } = useUser();
+  const auth = useAuth();
+  const router = useRouter();
+
+  const handleSignOut = async () => {
+    try {
+      await signOut(auth);
+      router.push('/login');
+    } catch (error) {
+      console.error("Error signing out: ", error);
+    }
+  };
+  
+  const getInitials = (name?: string | null) => {
+    if (!name) return 'U';
+    const names = name.split(' ');
+    if (names.length > 1) {
+      return names[0][0] + names[names.length - 1][0];
+    }
+    return name.substring(0, 2);
+  }
 
   return (
     <SidebarProvider>
@@ -54,8 +86,9 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
           <SidebarMenu>
             {navItems.map((item) => (
               <SidebarMenuItem key={item.href}>
-                <Link href={item.href}>
+                <Link href={item.href} legacyBehavior passHref>
                   <SidebarMenuButton
+                    as="a"
                     isActive={pathname === item.href}
                     tooltip={item.label}
                   >
@@ -68,13 +101,28 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
           </SidebarMenu>
         </SidebarContent>
         <SidebarFooter>
-          <div className="flex items-center gap-3 p-3">
-            <Avatar className="h-8 w-8">
-              <AvatarImage src="https://picsum.photos/seed/user/40/40" alt="Usuario" data-ai-hint="person face" />
-              <AvatarFallback>U</AvatarFallback>
-            </Avatar>
-            <span className="truncate text-sm font-medium">Usuario</span>
-          </div>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <div className="flex cursor-pointer items-center gap-3 p-3">
+                <Avatar className="h-8 w-8">
+                  <AvatarImage src={user?.photoURL || undefined} alt={user?.displayName || "Usuario"} />
+                  <AvatarFallback>{getInitials(user?.displayName || user?.email)}</AvatarFallback>
+                </Avatar>
+                <div className="flex flex-col text-sm font-medium w-full truncate">
+                    <span className="truncate">{user?.displayName || 'Usuario'}</span>
+                    <span className="truncate text-xs text-muted-foreground">{user?.email}</span>
+                </div>
+              </div>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent className="w-56 mb-2" side="top" align="start">
+              <DropdownMenuLabel>Mi Cuenta</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={handleSignOut}>
+                <LogOut className="mr-2 h-4 w-4" />
+                <span>Cerrar sesión</span>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </SidebarFooter>
       </Sidebar>
       <SidebarInset>
