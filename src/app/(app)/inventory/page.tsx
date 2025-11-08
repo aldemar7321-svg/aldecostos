@@ -1,25 +1,52 @@
-"use client";
+'use client';
 
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Download, PlusCircle, MoreHorizontal, Trash2, Edit } from "lucide-react";
-import { PageHeader } from "@/components/page-header";
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetFooter, SheetClose } from '@/components/ui/sheet';
+import { Button } from '@/components/ui/button';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
+import { Download, PlusCircle, MoreHorizontal, Trash2, Edit } from 'lucide-react';
+import { PageHeader } from '@/components/page-header';
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetDescription,
+  SheetFooter,
+  SheetClose,
+} from '@/components/ui/sheet';
 import { Input } from '@/components/ui/input';
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import { inventoryData } from '@/lib/data';
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from '@/components/ui/form';
 import type { PriceList } from '@/lib/types';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
+} from '@/components/ui/dropdown-menu';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -29,25 +56,39 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "@/components/ui/alert-dialog"
+} from '@/components/ui/alert-dialog';
 
 const formatCurrency = (value: number) =>
-  new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 2 }).format(value);
+  new Intl.NumberFormat('es-CO', {
+    style: 'currency',
+    currency: 'COP',
+    minimumFractionDigits: 2,
+  }).format(value);
 
 const formSchema = z.object({
-  product: z.string().min(1, "El nombre del producto es requerido."),
-  measure: z.string().min(1, "La unidad de medida es requerida."),
-  value: z.coerce.number().positive("El valor debe ser un número positivo."),
-  unitValue: z.coerce.number().positive("El valor unitario debe ser un número positivo."),
+  product: z.string().min(1, 'El nombre del producto es requerido.'),
+  measure: z.string().min(1, 'La unidad de medida es requerida.'),
+  value: z.coerce.number().positive('El valor debe ser un número positivo.'),
+  unitValue: z.coerce
+    .number()
+    .positive('El valor unitario debe ser un número positivo.'),
 });
 
-export default function InventoryPage() {
+const InventoryContent = ({
+  inventory,
+  addInventoryItem,
+  updateInventoryItem,
+  deleteInventoryItem,
+}: {
+  inventory: PriceList[];
+  addInventoryItem: (item: PriceList) => void;
+  updateInventoryItem: (item: PriceList) => void;
+  deleteInventoryItem: (id: string) => void;
+}) => {
   const [isSheetOpen, setIsSheetOpen] = useState(false);
-  const [priceLists, setPriceLists] = useState<PriceList[]>(inventoryData);
   const [editingItem, setEditingItem] = useState<PriceList | null>(null);
   const [isAlertOpen, setIsAlertOpen] = useState(false);
   const [itemToDelete, setItemToDelete] = useState<string | null>(null);
-
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -64,7 +105,7 @@ export default function InventoryPage() {
     form.reset({ product: '', measure: '', value: 0, unitValue: 0 });
     setIsSheetOpen(true);
   };
-  
+
   const handleEdit = (item: PriceList) => {
     setEditingItem(item);
     form.reset(item);
@@ -78,7 +119,7 @@ export default function InventoryPage() {
 
   const handleDelete = () => {
     if (itemToDelete) {
-      setPriceLists(prev => prev.filter(item => item.id !== itemToDelete));
+      deleteInventoryItem(itemToDelete);
       setItemToDelete(null);
     }
     setIsAlertOpen(false);
@@ -86,15 +127,13 @@ export default function InventoryPage() {
 
   function onSubmit(values: z.infer<typeof formSchema>) {
     if (editingItem) {
-      // Update existing item
-      setPriceLists(prev => prev.map(item => item.id === editingItem.id ? { ...item, ...values } : item));
+      updateInventoryItem({ ...editingItem, ...values });
     } else {
-      // Add new item
       const newPriceList: PriceList = {
-          id: `pl-${Date.now()}`,
-          ...values
-      }
-      setPriceLists(prev => [...prev, newPriceList]);
+        id: `pl-${Date.now()}`,
+        ...values,
+      };
+      addInventoryItem(newPriceList);
     }
     form.reset();
     setIsSheetOpen(false);
@@ -102,14 +141,19 @@ export default function InventoryPage() {
   }
 
   const handleExport = () => {
-    const headers = ["Producto", "Medida de Compra", "Valor de Compra", "Valor Unitario"];
+    const headers = [
+      'Producto',
+      'Medida de Compra',
+      'Valor de Compra',
+      'Valor Unitario',
+    ];
     const csvContent = [
       headers.join(','),
-      ...priceLists.map(item => 
+      ...inventory.map((item) =>
         [item.product, item.measure, item.value, item.unitValue].join(',')
-      )
+      ),
     ].join('\n');
-    
+
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement('a');
     if (link.href) {
@@ -142,7 +186,8 @@ export default function InventoryPage() {
         <CardHeader>
           <CardTitle>Lista de Precios</CardTitle>
           <CardDescription>
-            El 'Valor Unitario' es el costo real utilizado en todos los cálculos de recetas.
+            El 'Valor Unitario' es el costo real utilizado en todos los cálculos
+            de recetas.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -152,17 +197,23 @@ export default function InventoryPage() {
                 <TableHead>Producto</TableHead>
                 <TableHead className="text-center">Medida de Compra</TableHead>
                 <TableHead className="text-right">Valor de Compra</TableHead>
-                <TableHead className="text-right font-medium text-primary">Valor Unitario</TableHead>
+                <TableHead className="text-right font-medium text-primary">
+                  Valor Unitario
+                </TableHead>
                 <TableHead className="w-[50px] text-right">Acciones</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {priceLists?.map((item) => (
+              {inventory?.map((item) => (
                 <TableRow key={item.id}>
                   <TableCell className="font-medium">{item.product}</TableCell>
                   <TableCell className="text-center">{item.measure}</TableCell>
-                  <TableCell className="text-right">{formatCurrency(item.value)}</TableCell>
-                  <TableCell className="text-right font-semibold">{formatCurrency(item.unitValue)}</TableCell>
+                  <TableCell className="text-right">
+                    {formatCurrency(item.value)}
+                  </TableCell>
+                  <TableCell className="text-right font-semibold">
+                    {formatCurrency(item.unitValue)}
+                  </TableCell>
                   <TableCell className="text-right">
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
@@ -176,18 +227,24 @@ export default function InventoryPage() {
                           <Edit className="mr-2 h-4 w-4" />
                           Editar
                         </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => handleDeleteConfirmation(item.id)} className="text-destructive">
-                           <Trash2 className="mr-2 h-4 w-4" />
-                           Eliminar
+                        <DropdownMenuItem
+                          onClick={() => handleDeleteConfirmation(item.id)}
+                          className="text-destructive"
+                        >
+                          <Trash2 className="mr-2 h-4 w-4" />
+                          Eliminar
                         </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </TableCell>
                 </TableRow>
               ))}
-               {priceLists?.length === 0 && (
+              {inventory?.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={5} className="text-center text-muted-foreground py-8">
+                  <TableCell
+                    colSpan={5}
+                    className="text-center text-muted-foreground py-8"
+                  >
                     No has añadido ningún ingrediente todavía.
                   </TableCell>
                 </TableRow>
@@ -196,16 +253,23 @@ export default function InventoryPage() {
           </Table>
         </CardContent>
       </Card>
-       <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
+      <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
         <SheetContent>
           <SheetHeader>
-            <SheetTitle>{editingItem ? 'Editar Ingrediente' : 'Añadir Nuevo Ingrediente'}</SheetTitle>
+            <SheetTitle>
+              {editingItem ? 'Editar Ingrediente' : 'Añadir Nuevo Ingrediente'}
+            </SheetTitle>
             <SheetDescription>
-             {editingItem ? 'Modifica los detalles del ingrediente.' : 'Completa los detalles del nuevo ingrediente o materia prima.'}
+              {editingItem
+                ? 'Modifica los detalles del ingrediente.'
+                : 'Completa los detalles del nuevo ingrediente o materia prima.'}
             </SheetDescription>
           </SheetHeader>
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 py-6">
+            <form
+              onSubmit={form.handleSubmit(onSubmit)}
+              className="space-y-6 py-6"
+            >
               <FormField
                 control={form.control}
                 name="product"
@@ -262,7 +326,9 @@ export default function InventoryPage() {
                 <SheetClose asChild>
                   <Button variant="outline">Cancelar</Button>
                 </SheetClose>
-                <Button type="submit">{editingItem ? 'Guardar Cambios' : 'Guardar Ingrediente'}</Button>
+                <Button type="submit">
+                  {editingItem ? 'Guardar Cambios' : 'Guardar Ingrediente'}
+                </Button>
               </SheetFooter>
             </form>
           </Form>
@@ -273,12 +339,16 @@ export default function InventoryPage() {
           <AlertDialogHeader>
             <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
             <AlertDialogDescription>
-              Esta acción no se puede deshacer. Esto eliminará permanentemente el ingrediente.
+              Esta acción no se puede deshacer. Esto eliminará permanentemente
+              el ingrediente.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDelete} className="bg-destructive hover:bg-destructive/90">
+            <AlertDialogAction
+              onClick={handleDelete}
+              className="bg-destructive hover:bg-destructive/90"
+            >
               Sí, eliminar
             </AlertDialogAction>
           </AlertDialogFooter>
@@ -286,4 +356,9 @@ export default function InventoryPage() {
       </AlertDialog>
     </div>
   );
+};
+
+
+export default function InventoryPage() {
+    return (props: any) => <InventoryContent {...props} />;
 }

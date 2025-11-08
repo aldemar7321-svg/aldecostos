@@ -1,41 +1,95 @@
 'use client';
 
 import { useState } from 'react';
-import jsPDF from "jspdf";
-import autoTable from "jspdf-autotable";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { inventoryData, productsData, laborSettingsData, overheadData } from "@/lib/data";
-import { PageHeader } from "@/components/page-header";
-import { Button } from "@/components/ui/button";
-import { Download, FileText } from "lucide-react";
-import type { Product } from '@/lib/types';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { PageHeader } from '@/components/page-header';
+import { Button } from '@/components/ui/button';
+import { Download, FileText } from 'lucide-react';
+import type { Product, PriceList, LaborSettings, OverheadItem } from '@/lib/types';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 
 const formatCurrency = (value: number) =>
-  new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 2 }).format(value);
+  new Intl.NumberFormat('es-CO', {
+    style: 'currency',
+    currency: 'COP',
+    minimumFractionDigits: 2,
+  }).format(value);
 
 const formatPercentage = (value: number) =>
-  new Intl.NumberFormat('es-CO', { style: 'percent', minimumFractionDigits: 2 }).format(value);
+  new Intl.NumberFormat('es-CO', {
+    style: 'percent',
+    minimumFractionDigits: 2,
+  }).format(value);
 
-
-const inventoryMap = new Map(inventoryData.map(item => [item.id, item]));
-
-// Pre-calculate rates
-const hourRate = laborSettingsData.totalMonthlyHours > 0 ? laborSettingsData.monthlyCost / laborSettingsData.totalMonthlyHours : 0;
-const totalCIF = overheadData.reduce((acc, item) => acc + item.monthlyValue * item.productionPercentage, 0);
-const cifRate = laborSettingsData.totalMonthlyHours > 0 ? totalCIF / laborSettingsData.totalMonthlyHours : 0;
-
-export default function ReportsPage() {
-  const [selectedProductId, setSelectedProductId] = useState<string>(productsData[0]?.id || '');
+const ReportsContent = ({
+  products,
+  inventory,
+  laborSettings,
+  overhead,
+}: {
+  products: Product[];
+  inventory: PriceList[];
+  laborSettings: LaborSettings;
+  overhead: OverheadItem[];
+}) => {
+  const [selectedProductId, setSelectedProductId] = useState<string>(
+    products[0]?.id || ''
+  );
   const [profitPercentage, setProfitPercentage] = useState(0.3); // Default 30%
-  const selectedProduct = productsData.find(p => p.id === selectedProductId);
+  const selectedProduct = products.find((p) => p.id === selectedProductId);
+
+  const inventoryMap = new Map(inventory.map((item) => [item.id, item]));
+
+  // Pre-calculate rates
+  const hourRate =
+    laborSettings.totalMonthlyHours > 0
+      ? laborSettings.monthlyCost / laborSettings.totalMonthlyHours
+      : 0;
+  const totalCIF = overhead.reduce(
+    (acc, item) => acc + item.monthlyValue * item.productionPercentage,
+    0
+  );
+  const cifRate =
+    laborSettings.totalMonthlyHours > 0
+      ? totalCIF / laborSettings.totalMonthlyHours
+      : 0;
 
   const calculateCosts = (product: Product | undefined) => {
     if (!product) {
-      return { rawMaterialCost: 0, laborCost: 0, overheadCost: 0, totalCost: 0, unitCost: 0, salePrice: 0, profitPerUnit: 0 };
+      return {
+        rawMaterialCost: 0,
+        laborCost: 0,
+        overheadCost: 0,
+        totalCost: 0,
+        unitCost: 0,
+        salePrice: 0,
+        profitPerUnit: 0,
+      };
     }
 
     const rawMaterialCost = product.recipe.reduce((acc, ingredient) => {
@@ -44,7 +98,8 @@ export default function ReportsPage() {
     }, 0);
 
     const totalLaborHours = product.laborProcesses.reduce((acc, process) => {
-      const timeInHours = process.timeUnit === 'minutos' ? process.time / 60 : process.time;
+      const timeInHours =
+        process.timeUnit === 'minutos' ? process.time / 60 : process.time;
       return acc + timeInHours * process.operators;
     }, 0);
     const laborCost = totalLaborHours * hourRate;
@@ -57,49 +112,69 @@ export default function ReportsPage() {
     const salePrice = profitPercentage < 1 ? unitCost / (1 - profitPercentage) : unitCost;
     const profitPerUnit = salePrice - unitCost;
 
-    return { rawMaterialCost, laborCost, overheadCost, totalCost, unitCost, salePrice, profitPerUnit };
+    return {
+      rawMaterialCost,
+      laborCost,
+      overheadCost,
+      totalCost,
+      unitCost,
+      salePrice,
+      profitPerUnit,
+    };
   };
 
-  const { rawMaterialCost, laborCost, overheadCost, totalCost, unitCost, salePrice, profitPerUnit } = calculateCosts(selectedProduct);
-  
+  const {
+    rawMaterialCost,
+    laborCost,
+    overheadCost,
+    totalCost,
+    unitCost,
+    salePrice,
+    profitPerUnit,
+  } = calculateCosts(selectedProduct);
+
   const handleExportCsv = () => {
-    const headers = ["Componente de Costo", "Costo del Lote", "Costo Unitario"];
+    if (!selectedProduct) return;
+    const headers = ['Componente de Costo', 'Costo del Lote', 'Costo Unitario'];
     const data = [
-      ["Materia Prima", rawMaterialCost],
-      ["Mano de Obra", laborCost],
-      ["Costos Indirectos de Fabricación (CIF)", overheadCost],
-      ["Costo Total del Lote (CTP)", totalCost],
-      ["Costo Unitario de Producción (por lb)", unitCost],
-      ["Porcentaje de Rentabilidad", formatPercentage(profitPercentage)],
-      ["Precio de Venta Sugerido (por lb)", salePrice],
-      ["Utilidad por Unidad (por lb)", profitPerUnit],
+      ['Materia Prima', rawMaterialCost],
+      ['Mano de Obra', laborCost],
+      ['Costos Indirectos de Fabricación (CIF)', overheadCost],
+      ['Costo Total del Lote (CTP)', totalCost],
+      ['Costo Unitario de Producción (por lb)', unitCost],
+      ['Porcentaje de Rentabilidad', formatPercentage(profitPercentage)],
+      ['Precio de Venta Sugerido (por lb)', salePrice],
+      ['Utilidad por Unidad (por lb)', profitPerUnit],
     ];
 
     const csvContent = [
       headers.join(','),
-      ...data.map(row => row.join(','))
+      ...data.map((row) => row.join(',')),
     ].join('\n');
 
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement('a');
     const url = URL.createObjectURL(blob);
     link.href = url;
-    link.setAttribute('download', `reporte_${selectedProduct?.name.replace(/ /g, '_')}.csv`);
+    link.setAttribute(
+      'download',
+      `reporte_${selectedProduct?.name.replace(/ /g, '_')}.csv`
+    );
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
   };
-  
+
   const handleExportPdf = () => {
-    if(!selectedProduct) return;
+    if (!selectedProduct) return;
 
     const doc = new jsPDF();
-    
+
     // Header
     doc.setFontSize(20);
-    doc.text("ProdCost Pro", 14, 22);
+    doc.text('ProdCost Pro', 14, 22);
     doc.setFontSize(12);
-    doc.text("Reporte de Costo de Producción", 14, 30);
+    doc.text('Reporte de Costo de Producción', 14, 30);
 
     // Product Info
     doc.setFontSize(14);
@@ -117,12 +192,18 @@ export default function ReportsPage() {
         ['Costos Indirectos de Fabricación (CIF)', formatCurrency(overheadCost)],
       ],
       foot: [
-        [{ content: 'Costo Total del Lote (CTP)', styles: { fontStyle: 'bold' } }, { content: formatCurrency(totalCost), styles: { fontStyle: 'bold' } }],
+        [
+          {
+            content: 'Costo Total del Lote (CTP)',
+            styles: { fontStyle: 'bold' },
+          },
+          { content: formatCurrency(totalCost), styles: { fontStyle: 'bold' } },
+        ],
       ],
       theme: 'striped',
-      headStyles: { fillColor: [41, 128, 185] }
+      headStyles: { fillColor: [41, 128, 185] },
     });
-    
+
     let finalY = (doc as any).lastAutoTable.finalY + 10;
 
     // Pricing Table
@@ -130,17 +211,25 @@ export default function ReportsPage() {
       startY: finalY,
       head: [['Precio y Rentabilidad', 'Valor por Unidad (lb)']],
       body: [
-          ['Costo Unitario de Producción', formatCurrency(unitCost)],
-          ['Margen de Rentabilidad Deseado', formatPercentage(profitPercentage)],
-          ['Utilidad Estimada por Unidad', formatCurrency(profitPerUnit)],
+        ['Costo Unitario de Producción', formatCurrency(unitCost)],
+        ['Margen de Rentabilidad Deseado', formatPercentage(profitPercentage)],
+        ['Utilidad Estimada por Unidad', formatCurrency(profitPerUnit)],
       ],
-       foot: [
-        [{ content: 'Precio de Venta Sugerido', styles: { fontStyle: 'bold' } }, { content: formatCurrency(salePrice), styles: { fontStyle: 'bold' } }],
+      foot: [
+        [
+          {
+            content: 'Precio de Venta Sugerido',
+            styles: { fontStyle: 'bold' },
+          },
+          {
+            content: formatCurrency(salePrice),
+            styles: { fontStyle: 'bold' },
+          },
+        ],
       ],
       theme: 'striped',
-      headStyles: { fillColor: [22, 163, 74] }
+      headStyles: { fillColor: [22, 163, 74] },
     });
-
 
     doc.save(`reporte_${selectedProduct.name.replace(/ /g, '_')}.pdf`);
   };
@@ -155,22 +244,29 @@ export default function ReportsPage() {
           <Download className="mr-2 h-4 w-4" />
           Exportar CSV
         </Button>
-         <Button size="sm" onClick={handleExportPdf}>
+        <Button size="sm" onClick={handleExportPdf}>
           <FileText className="mr-2 h-4 w-4" />
           Generar PDF
         </Button>
       </PageHeader>
-      
+
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
         <div className="flex items-center gap-2">
-          <Label htmlFor="product-select" className="shrink-0">Seleccionar Producto:</Label>
-          <Select value={selectedProductId} onValueChange={setSelectedProductId}>
+          <Label htmlFor="product-select" className="shrink-0">
+            Seleccionar Producto:
+          </Label>
+          <Select
+            value={selectedProductId}
+            onValueChange={setSelectedProductId}
+          >
             <SelectTrigger id="product-select" className="w-full sm:w-[250px]">
               <SelectValue placeholder="Seleccionar producto" />
             </SelectTrigger>
             <SelectContent>
-              {productsData.map(product => (
-                <SelectItem key={product.id} value={product.id}>{product.name}</SelectItem>
+              {products.map((product) => (
+                <SelectItem key={product.id} value={product.id}>
+                  {product.name}
+                </SelectItem>
               ))}
             </SelectContent>
           </Select>
@@ -180,99 +276,139 @@ export default function ReportsPage() {
       {selectedProduct && (
         <div className="grid gap-6 lg:grid-cols-2">
           <Card>
-              <CardHeader>
-              <CardTitle>Costo Total de Producción (CTP): {selectedProduct.name}</CardTitle>
+            <CardHeader>
+              <CardTitle>
+                Costo Total de Producción (CTP): {selectedProduct.name}
+              </CardTitle>
               <CardDescription>
-                  Costo consolidado para un lote de {selectedProduct.batchSize} lbs.
+                Costo consolidado para un lote de {selectedProduct.batchSize}{' '}
+                lbs.
               </CardDescription>
-              </CardHeader>
-              <CardContent>
+            </CardHeader>
+            <CardContent>
               <Table>
-                  <TableHeader>
+                <TableHeader>
                   <TableRow>
-                      <TableHead>Componente de Costo</TableHead>
-                      <TableHead className="text-right">Costo del Lote</TableHead>
+                    <TableHead>Componente de Costo</TableHead>
+                    <TableHead className="text-right">Costo del Lote</TableHead>
                   </TableRow>
-                  </TableHeader>
-                  <TableBody>
+                </TableHeader>
+                <TableBody>
                   <TableRow>
-                      <TableCell className="font-medium">Materia Prima</TableCell>
-                      <TableCell className="text-right">{formatCurrency(rawMaterialCost)}</TableCell>
-                  </TableRow>
-                  <TableRow>
-                      <TableCell className="font-medium">Mano de Obra</TableCell>
-                      <TableCell className="text-right">{formatCurrency(laborCost)}</TableCell>
+                    <TableCell className="font-medium">Materia Prima</TableCell>
+                    <TableCell className="text-right">
+                      {formatCurrency(rawMaterialCost)}
+                    </TableCell>
                   </TableRow>
                   <TableRow>
-                      <TableCell className="font-medium">Costos Indirectos de Fabricación (CIF)</TableCell>
-                      <TableCell className="text-right">{formatCurrency(overheadCost)}</TableCell>
+                    <TableCell className="font-medium">Mano de Obra</TableCell>
+                    <TableCell className="text-right">
+                      {formatCurrency(laborCost)}
+                    </TableCell>
+                  </TableRow>
+                  <TableRow>
+                    <TableCell className="font-medium">
+                      Costos Indirectos de Fabricación (CIF)
+                    </TableCell>
+                    <TableCell className="text-right">
+                      {formatCurrency(overheadCost)}
+                    </TableCell>
                   </TableRow>
                   <TableRow className="bg-muted/50">
-                      <TableHead>Costo Total del Lote (CTP)</TableHead>
-                      <TableHead className="text-right font-bold text-lg">{formatCurrency(totalCost)}</TableHead>
+                    <TableHead>Costo Total del Lote (CTP)</TableHead>
+                    <TableHead className="text-right font-bold text-lg">
+                      {formatCurrency(totalCost)}
+                    </TableHead>
                   </TableRow>
-                  </TableBody>
+                </TableBody>
               </Table>
-              </CardContent>
-              <CardFooter className="justify-end">
+            </CardContent>
+            <CardFooter className="justify-end">
               <div className="flex flex-col items-end">
-                  <p className="text-muted-foreground">Costo Unitario de Producción (por lb):</p>
-                  <p className="text-2xl font-bold text-primary">{formatCurrency(unitCost)}</p>
+                <p className="text-muted-foreground">
+                  Costo Unitario de Producción (por lb):
+                </p>
+                <p className="text-2xl font-bold text-primary">
+                  {formatCurrency(unitCost)}
+                </p>
               </div>
-              </CardFooter>
+            </CardFooter>
           </Card>
-           <Card className="border-accent">
-              <CardHeader>
-                <CardTitle className="text-accent-foreground">Precio de Venta Sugerido</CardTitle>
-                <CardDescription>
-                    Cálculo del precio final basado en tu margen de rentabilidad.
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Concepto</TableHead>
-                      <TableHead className="text-right">Valor por Unidad (lb)</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    <TableRow>
-                      <TableCell>Costo Unitario de Producción</TableCell>
-                      <TableCell className="text-right">{formatCurrency(unitCost)}</TableCell>
-                    </TableRow>
-                    <TableRow>
-                      <TableCell className="font-medium">Margen de Rentabilidad Deseado</TableCell>
-                      <TableCell className="text-right">
-                         <div className="flex items-center justify-end gap-2">
-                            <Input 
-                              id="profit-percentage"
-                              type="number"
-                              value={profitPercentage * 100}
-                              onChange={e => setProfitPercentage(parseFloat(e.target.value) / 100)}
-                              className="w-20 h-8 text-right"
-                              placeholder="Ej: 30"
-                            />
-                            <span>%</span>
-                         </div>
-                      </TableCell>
-                    </TableRow>
-                     <TableRow>
-                      <TableCell>Utilidad Estimada por Unidad</TableCell>
-                      <TableCell className="text-right">{formatCurrency(profitPerUnit)}</TableCell>
-                    </TableRow>
-                  </TableBody>
-                </Table>
-              </CardContent>
-              <CardFooter className="justify-end bg-accent/10 rounded-b-lg">
-                <div className="flex flex-col items-end">
-                  <p className="text-muted-foreground">Precio de Venta Sugerido (por lb):</p>
-                  <p className="text-2xl font-bold text-accent-foreground">{formatCurrency(salePrice)}</p>
-                </div>
-              </CardFooter>
-            </Card>
+          <Card className="border-accent">
+            <CardHeader>
+              <CardTitle className="text-accent-foreground">
+                Precio de Venta Sugerido
+              </CardTitle>
+              <CardDescription>
+                Cálculo del precio final basado en tu margen de rentabilidad.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Concepto</TableHead>
+                    <TableHead className="text-right">
+                      Valor por Unidad (lb)
+                    </TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  <TableRow>
+                    <TableCell>Costo Unitario de Producción</TableCell>
+                    <TableCell className="text-right">
+                      {formatCurrency(unitCost)}
+                    </TableCell>
+                  </TableRow>
+                  <TableRow>
+                    <TableCell className="font-medium">
+                      Margen de Rentabilidad Deseado
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <div className="flex items-center justify-end gap-2">
+                        <Input
+                          id="profit-percentage"
+                          type="number"
+                          value={profitPercentage * 100}
+                          onChange={(e) =>
+                            setProfitPercentage(
+                              parseFloat(e.target.value) / 100
+                            )
+                          }
+                          className="w-20 h-8 text-right"
+                          placeholder="Ej: 30"
+                        />
+                        <span>%</span>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                  <TableRow>
+                    <TableCell>Utilidad Estimada por Unidad</TableCell>
+                    <TableCell className="text-right">
+                      {formatCurrency(profitPerUnit)}
+                    </TableCell>
+                  </TableRow>
+                </TableBody>
+              </Table>
+            </CardContent>
+            <CardFooter className="justify-end bg-accent/10 rounded-b-lg">
+              <div className="flex flex-col items-end">
+                <p className="text-muted-foreground">
+                  Precio de Venta Sugerido (por lb):
+                </p>
+                <p className="text-2xl font-bold text-accent-foreground">
+                  {formatCurrency(salePrice)}
+                </p>
+              </div>
+            </CardFooter>
+          </Card>
         </div>
       )}
     </div>
   );
+};
+
+
+export default function ReportsPage() {
+    return (props: any) => <ReportsContent {...props} />;
 }
