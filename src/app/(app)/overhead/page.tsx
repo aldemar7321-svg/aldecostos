@@ -57,7 +57,9 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import type { OverheadItem, LaborSettings } from '@/lib/types';
+import type { OverheadItem } from '@/lib/types';
+import { useAppData } from '@/app/(app)/layout';
+
 
 const formatCurrency = (value: number) =>
   new Intl.NumberFormat('es-CO', {
@@ -83,19 +85,8 @@ const formSchema = z.object({
     .max(1, 'El porcentaje debe ser como máximo 1 (ej: 0.7 para 70%).'),
 });
 
-const OverheadContent = ({
-  overhead,
-  addOverheadItem,
-  updateOverheadItem,
-  deleteOverheadItem,
-  laborSettings,
-}: {
-  overhead: OverheadItem[];
-  addOverheadItem: (item: OverheadItem) => void;
-  updateOverheadItem: (item: OverheadItem) => void;
-  deleteOverheadItem: (id: string) => void;
-  laborSettings: LaborSettings;
-}) => {
+const OverheadContent = () => {
+  const { overhead, addOverheadItem, updateOverheadItem, deleteOverheadItem, laborSettings } = useAppData();
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<OverheadItem | null>(null);
   const [isAlertOpen, setIsAlertOpen] = useState(false);
@@ -345,5 +336,5 @@ const OverheadContent = ({
 
 
 export default function OverheadPage() {
-    return (props: any) => <OverheadContent {...props} />;
+    return <OverheadContent />;
 }

@@ -57,6 +57,8 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import { useAppData } from '@/app/(app)/layout';
+
 
 const formatCurrency = (value: number) =>
   new Intl.NumberFormat('es-CO', {
@@ -74,17 +76,8 @@ const formSchema = z.object({
     .positive('El valor unitario debe ser un número positivo.'),
 });
 
-const InventoryContent = ({
-  inventory,
-  addInventoryItem,
-  updateInventoryItem,
-  deleteInventoryItem,
-}: {
-  inventory: PriceList[];
-  addInventoryItem: (item: PriceList) => void;
-  updateInventoryItem: (item: PriceList) => void;
-  deleteInventoryItem: (id: string) => void;
-}) => {
+const InventoryContent = () => {
+  const { inventory, addInventoryItem, updateInventoryItem, deleteInventoryItem } = useAppData();
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<PriceList | null>(null);
   const [isAlertOpen, setIsAlertOpen] = useState(false);
@@ -360,5 +353,5 @@ const InventoryContent = ({
 
 
 export default function InventoryPage() {
-    return (props: any) => <InventoryContent {...props} />;
+    return <InventoryContent />;
 }

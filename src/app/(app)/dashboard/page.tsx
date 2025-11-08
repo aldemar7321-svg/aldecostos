@@ -8,18 +8,16 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { ArrowUpRight } from "lucide-react";
 import type { Product, PriceList, LaborSettings, OverheadItem } from '@/lib/types';
+import { useAppData } from "@/app/(app)/layout";
 
 
 // Helper to format currency
 const formatCurrency = (value: number) =>
   new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 }).format(value);
 
-const DashboardContent = ({ inventory, products, laborSettings, overhead }: {
-    inventory: PriceList[];
-    products: Product[];
-    laborSettings: LaborSettings;
-    overhead: OverheadItem[];
-}) => {
+const DashboardContent = () => {
+    const { inventory, products, laborSettings, overhead } = useAppData();
+    
     const totalInventoryValue = inventory.reduce((sum, item) => sum + (item.value), 0);
     const totalMonthlyLabor = laborSettings.monthlyCost;
     const totalMonthlyCIF = overhead.reduce((sum, item) => sum + (item.monthlyValue * item.productionPercentage), 0);
@@ -147,5 +145,5 @@ const DashboardContent = ({ inventory, products, laborSettings, overhead }: {
 }
 
 export default function DashboardPage() {
-    return (props: any) => <DashboardContent {...props} />;
+    return <DashboardContent />;
 }

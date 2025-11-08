@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { createContext, useContext, useState } from 'react';
 import AppShell from '@/components/app-shell';
 import {
   inventoryData as initialInventoryData,
@@ -9,6 +9,32 @@ import {
   overheadData as initialOverheadData,
 } from '@/lib/data';
 import type { Product, PriceList, LaborSettings, OverheadItem } from '@/lib/types';
+
+interface AppDataContextType {
+  products: Product[];
+  inventory: PriceList[];
+  laborSettings: LaborSettings;
+  overhead: OverheadItem[];
+  addProduct: (product: Product) => void;
+  updateProduct: (updatedProduct: Product) => void;
+  addInventoryItem: (item: PriceList) => void;
+  updateInventoryItem: (updatedItem: PriceList) => void;
+  deleteInventoryItem: (itemId: string) => void;
+  addOverheadItem: (item: OverheadItem) => void;
+  updateOverheadItem: (updatedItem: OverheadItem) => void;
+  deleteOverheadItem: (itemId: string) => void;
+  setLaborSettings: (settings: LaborSettings) => void;
+}
+
+const AppDataContext = createContext<AppDataContextType | null>(null);
+
+export function useAppData() {
+  const context = useContext(AppDataContext);
+  if (!context) {
+    throw new Error('useAppData must be used within an AppDataProvider');
+  }
+  return context;
+}
 
 export default function AppLayout({
   children,
@@ -70,8 +96,10 @@ export default function AppLayout({
   };
 
   return (
-    <AppShell>
-      {typeof children === 'function' ? children(state) : children}
-    </AppShell>
+    <AppDataContext.Provider value={state}>
+      <AppShell>
+        {children}
+      </AppShell>
+    </AppDataContext.Provider>
   );
 }

@@ -29,9 +29,11 @@ import {
 import { PageHeader } from '@/components/page-header';
 import { Button } from '@/components/ui/button';
 import { Download, FileText } from 'lucide-react';
-import type { Product, PriceList, LaborSettings, OverheadItem } from '@/lib/types';
+import type { Product } from '@/lib/types';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
+import { useAppData } from '@/app/(app)/layout';
+
 
 const formatCurrency = (value: number) =>
   new Intl.NumberFormat('es-CO', {
@@ -46,17 +48,8 @@ const formatPercentage = (value: number) =>
     minimumFractionDigits: 2,
   }).format(value);
 
-const ReportsContent = ({
-  products,
-  inventory,
-  laborSettings,
-  overhead,
-}: {
-  products: Product[];
-  inventory: PriceList[];
-  laborSettings: LaborSettings;
-  overhead: OverheadItem[];
-}) => {
+const ReportsContent = () => {
+  const { products, inventory, laborSettings, overhead } = useAppData();
   const [selectedProductId, setSelectedProductId] = useState<string>(
     products[0]?.id || ''
   );
@@ -410,5 +403,5 @@ const ReportsContent = ({
 
 
 export default function ReportsPage() {
-    return (props: any) => <ReportsContent {...props} />;
+    return <ReportsContent />;
 }

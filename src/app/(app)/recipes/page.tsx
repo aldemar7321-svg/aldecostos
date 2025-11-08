@@ -51,6 +51,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { useAppData } from '@/app/(app)/layout';
+
 
 const formatCurrency = (value: number) =>
   new Intl.NumberFormat('es-CO', {
@@ -74,17 +76,8 @@ const productFormSchema = z.object({
   laborProcesses: z.any(),
 });
 
-const RecipesContent = ({
-  products,
-  inventory,
-  addProduct,
-  updateProduct,
-}: {
-  products: Product[];
-  inventory: PriceList[];
-  addProduct: (product: Product) => void;
-  updateProduct: (product: Product) => void;
-}) => {
+const RecipesContent = () => {
+  const { products, inventory, addProduct, updateProduct } = useAppData();
   const [isAddProductSheetOpen, setIsAddProductSheetOpen] = useState(false);
   const [isEditProductSheetOpen, setIsEditProductSheetOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
@@ -145,13 +138,13 @@ const RecipesContent = ({
 
   const onProductSubmit = (values: z.infer<typeof productFormSchema>) => {
     if (editingProduct) {
-        const updatedProduct: Product = {
+        const updatedProductData: Product = {
             ...editingProduct,
             name: values.name,
             batchSize: values.batchSize,
             recipe: values.recipe,
           };
-        updateProduct(updatedProduct);
+        updateProduct(updatedProductData);
     }
     setIsEditProductSheetOpen(false);
     setEditingProduct(null);
@@ -482,5 +475,5 @@ const RecipesContent = ({
 
 
 export default function RecipesPage() {
-    return (props: any) => <RecipesContent {...props} />;
+    return <RecipesContent />;
 }

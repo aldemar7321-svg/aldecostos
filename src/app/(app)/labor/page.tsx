@@ -28,6 +28,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import type { Product, LaborSettings } from '@/lib/types';
+import { useAppData } from '@/app/(app)/layout';
 
 const formatCurrency = (value: number) =>
   new Intl.NumberFormat('es-CO', {
@@ -36,15 +37,8 @@ const formatCurrency = (value: number) =>
     minimumFractionDigits: 2,
   }).format(value);
 
-const LaborContent = ({
-    products,
-    laborSettings,
-    setLaborSettings
-}: {
-    products: Product[];
-    laborSettings: LaborSettings;
-    setLaborSettings: (settings: LaborSettings) => void;
-}) => {
+const LaborContent = () => {
+  const { products, laborSettings, setLaborSettings } = useAppData();
   const [selectedProductId, setSelectedProductId] = useState<string>(
     products[0]?.id || ''
   );
@@ -216,5 +210,5 @@ const LaborContent = ({
 
 
 export default function LaborPage() {
-    return (props: any) => <LaborContent {...props} />;
+    return <LaborContent />;
 }
