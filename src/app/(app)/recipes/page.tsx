@@ -8,61 +8,34 @@ import { z } from 'zod';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { inventoryData, productsData } from "@/lib/data";
+import { inventoryData as initialInventoryData, productsData as initialProductsData } from "@/lib/data";
 import type { Ingredient, Product, PriceList } from "@/lib/types";
 import { PageHeader } from "@/components/page-header";
 import { Button } from "@/components/ui/button";
-import { PlusCircle, Trash2, Edit, MoreHorizontal } from "lucide-react";
+import { PlusCircle, Trash2, Edit } from "lucide-react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetFooter, SheetClose } from '@/components/ui/sheet';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog"
-
 
 const formatCurrency = (value: number) =>
   new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 2 }).format(value);
-
-const inventoryMap = new Map(inventoryData.map(item => [item.id, item]));
-
-const calculateRecipeCost = (recipe: Ingredient[]) => {
-  return recipe.reduce((acc, ingredient) => {
-    const item = inventoryMap.get(ingredient.inventoryId);
-    const itemCost = item ? item.unitValue * ingredient.quantity : 0;
-    return acc + itemCost;
-  }, 0);
-};
 
 const productFormSchema = z.object({
   id: z.string(),
   name: z.string().min(1, "El nombre es requerido."),
   batchSize: z.coerce.number().positive("El tamaño del lote debe ser positivo."),
   recipe: z.array(z.object({
-    inventoryId: z.string().min(1),
-    quantity: z.coerce.number().positive(),
+    inventoryId: z.string().min(1, "Debes seleccionar un ingrediente."),
+    quantity: z.coerce.number().positive("La cantidad debe ser positiva."),
   })),
   laborProcesses: z.any(),
 });
 
-
 export default function RecipesPage() {
-  const [products, setProducts] = useState<Product[]>(productsData);
+  const [products, setProducts] = useState<Product[]>(initialProductsData);
+  const [inventoryData] = useState<PriceList[]>(initialInventoryData);
   const [isAddProductSheetOpen, setIsAddProductSheetOpen] = useState(false);
   const [isEditProductSheetOpen, setIsEditProductSheetOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
@@ -70,16 +43,27 @@ export default function RecipesPage() {
   const [newProductName, setNewProductName] = useState('');
   const [newProductBatchSize, setNewProductBatchSize] = useState(0);
 
+  const inventoryMap = new Map(inventoryData.map(item => [item.id, item]));
+
+  const calculateRecipeCost = (recipe: Ingredient[]) => {
+    return recipe.reduce((acc, ingredient) => {
+      const item = inventoryMap.get(ingredient.inventoryId);
+      const itemCost = item ? item.unitValue * ingredient.quantity : 0;
+      return acc + itemCost;
+    }, 0);
+  };
+
   const form = useForm<z.infer<typeof productFormSchema>>({
     resolver: zodResolver(productFormSchema),
   });
 
-  const { fields, append, remove, update } = useFieldArray({
+  const { fields, append, remove } = useFieldArray({
     control: form.control,
     name: "recipe"
   });
 
   const handleAddProduct = () => {
+    if(!newProductName || newProductBatchSize <= 0) return;
     const newProduct: Product = {
       id: `prod-${Date.now()}`,
       name: newProductName,
@@ -121,7 +105,7 @@ export default function RecipesPage() {
       </PageHeader>
       
       {products.length > 0 ? (
-        <Tabs defaultValue={products[0]?.id || ''}>
+        <Tabs defaultValue={products[0]?.id || ''} className="w-full">
           <TabsList className="grid w-full grid-cols-1 sm:grid-cols-2 md:w-fit">
             {products.map(product => (
               <TabsTrigger key={product.id} value={product.id}>{product.name}</TabsTrigger>
@@ -161,7 +145,7 @@ export default function RecipesPage() {
                           const item = inventoryMap.get(ingredient.inventoryId);
                           const totalValue = item ? item.unitValue * ingredient.quantity : 0;
                           return (
-                            <TableRow key={index}>
+                            <TableRow key={`${ingredient.inventoryId}-${index}`}>
                               <TableCell className="font-medium">{item?.product || 'N/A'}</TableCell>
                               <TableCell className="text-right">{ingredient.quantity.toFixed(2)} {item?.measure}</TableCell>
                               <TableCell className="text-right">{formatCurrency(item?.unitValue || 0)}</TableCell>
@@ -252,7 +236,7 @@ export default function RecipesPage() {
             </SheetDescription>
           </SheetHeader>
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(onProductSubmit)} className="flex h-full flex-col">
+            <form onSubmit={form.handleSubmit(onProductSubmit)} className="flex h-[calc(100vh-8rem)] flex-col">
               <div className="space-y-6 py-6 flex-1 overflow-y-auto pr-6">
                 <FormField
                   control={form.control}
@@ -284,7 +268,7 @@ export default function RecipesPage() {
                   <h4 className="font-medium mb-2">Ingredientes de la Receta</h4>
                   <div className="space-y-4">
                     {fields.map((field, index) => {
-                      const selectedInventoryItem = inventoryData.find(i => i.id === field.inventoryId);
+                      const selectedInventoryItem = inventoryData.find(i => i.id === form.watch(`recipe.${index}.inventoryId`));
                       return (
                         <div key={field.id} className="flex items-end gap-2 p-3 border rounded-lg bg-muted/50">
                           <FormField
@@ -316,7 +300,7 @@ export default function RecipesPage() {
                             name={`recipe.${index}.quantity`}
                             render={({ field }) => (
                               <FormItem className="w-32">
-                                <FormLabel>Cantidad ({selectedInventoryItem?.measure})</FormLabel>
+                                <FormLabel>Cantidad <span className="text-muted-foreground text-xs">({selectedInventoryItem?.measure})</span></FormLabel>
                                 <FormControl>
                                   <Input type="number" step="0.01" {...field} />
                                 </FormControl>
