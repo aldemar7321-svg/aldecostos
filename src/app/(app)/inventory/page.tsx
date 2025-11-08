@@ -58,6 +58,13 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { useAppData } from '@/app/(app)/layout';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 
 
 const formatCurrency = (value: number) =>
@@ -159,6 +166,8 @@ const InventoryContent = () => {
     link.click();
     document.body.removeChild(link);
   };
+
+  const units = ['kg', 'g', 'lb', 'oz', 'unid.', 'l', 'ml'];
 
   return (
     <div className="flex flex-col gap-6">
@@ -282,9 +291,23 @@ const InventoryContent = () => {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Medida de Compra</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Ej: lb, kg, unid." {...field} />
-                    </FormControl>
+                    <Select
+                      onValueChange={field.onChange}
+                      defaultValue={field.value}
+                    >
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Selecciona una unidad" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {units.map((unit) => (
+                          <SelectItem key={unit} value={unit}>
+                            {unit}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                     <FormMessage />
                   </FormItem>
                 )}
