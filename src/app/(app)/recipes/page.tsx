@@ -473,7 +473,6 @@ const RecipesContent = () => {
   );
 };
 
-
 export default function RecipesPage() {
     return <RecipesContent />;
 }
