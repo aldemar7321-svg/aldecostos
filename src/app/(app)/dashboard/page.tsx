@@ -26,24 +26,24 @@ const DashboardContent = () => {
     const inventoryMap = new Map(inventory.map(item => [item.id, item]));
     const packagingMap = new Map(packaging.map(item => [item.id, item]));
 
-    const materialCost = firstProduct ? firstProduct.recipe.reduce((sum, ing) => {
+    const materialCost = firstProduct?.recipe ? firstProduct.recipe.reduce((sum, ing) => {
         const item = inventoryMap.get(ing.inventoryId);
         return sum + (item ? item.unitValue * ing.quantity : 0);
     }, 0) : 0;
 
-    const packagingCost = firstProduct ? firstProduct.packaging.reduce((sum, pkg) => {
+    const packagingCost = firstProduct?.packaging ? firstProduct.packaging.reduce((sum, pkg) => {
         const item = packagingMap.get(pkg.packagingId);
         return sum + (item ? item.unitValue * pkg.quantity : 0);
     }, 0) : 0;
 
     const hourRate = laborSettings.monthlyCost / laborSettings.totalMonthlyHours;
-    const laborCost = firstProduct ? firstProduct.laborProcesses.reduce((sum, proc) => {
+    const laborCost = firstProduct?.laborProcesses ? firstProduct.laborProcesses.reduce((sum, proc) => {
         const timeInHours = proc.timeUnit === 'minutos' ? proc.time / 60 : proc.time;
         return sum + (timeInHours * hourRate * proc.operators);
     }, 0) : 0;
 
     const overheadRate = totalMonthlyCIF / laborSettings.totalMonthlyHours;
-    const totalLaborHours = firstProduct ? firstProduct.laborProcesses.reduce((sum, proc) => {
+    const totalLaborHours = firstProduct?.laborProcesses ? firstProduct.laborProcesses.reduce((sum, proc) => {
         const timeInHours = proc.timeUnit === 'minutos' ? proc.time / 60 : proc.time;
         return sum + timeInHours;
     }, 0) : 0;
