@@ -1,4 +1,4 @@
-import type { PriceList, Product, LaborSettings, OverheadItem } from './types';
+import type { PriceList, Product, LaborSettings, OverheadItem, TransportItem } from './types';
 
 export const inventoryData: PriceList[] = [
   { id: '1', product: 'Harina', measure: 'kg', value: 50, unitValue: 1.0 },
@@ -34,4 +34,8 @@ export const laborSettingsData: LaborSettings = {
 
 export const overheadData: OverheadItem[] = [
   { id: 'cif-1', concept: 'Arriendo', monthlyValue: 800, productionPercentage: 0.7 },
+];
+
+export const transportData: TransportItem[] = [
+  { id: 'trans-1', concept: 'Envío Local', monthlyValue: 400, productionPercentage: 1 },
 ];

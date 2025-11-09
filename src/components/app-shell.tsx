@@ -10,6 +10,7 @@ import {
   FileText,
   LayoutDashboard,
   Package,
+  Truck,
   Users,
   Warehouse,
 } from "lucide-react";
@@ -33,6 +34,7 @@ const navItems = [
   { href: "/recipes", icon: BookHeart, label: "Recetas" },
   { href: "/labor", icon: Users, label: "Mano de Obra" },
   { href: "/overhead", icon: Factory, label: "Costos Indirectos" },
+  { href: "/transport", icon: Truck, label: "Transporte" },
   { href: "/reports", icon: FileText, label: "Reportes" },
 ];
 

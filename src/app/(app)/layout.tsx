@@ -8,8 +8,9 @@ import {
   productsData as initialProductsData,
   laborSettingsData as initialLaborSettingsData,
   overheadData as initialOverheadData,
+  transportData as initialTransportData,
 } from '@/lib/data';
-import type { Product, PriceList, LaborSettings, OverheadItem } from '@/lib/types';
+import type { Product, PriceList, LaborSettings, OverheadItem, TransportItem } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
 
 interface AppDataContextType {
@@ -18,6 +19,7 @@ interface AppDataContextType {
   packaging: PriceList[];
   laborSettings: LaborSettings;
   overhead: OverheadItem[];
+  transport: TransportItem[];
   addProduct: (product: Product) => void;
   updateProduct: (updatedProduct: Product) => void;
   addInventoryItem: (item: PriceList) => void;
@@ -29,6 +31,9 @@ interface AppDataContextType {
   addOverheadItem: (item: OverheadItem) => void;
   updateOverheadItem: (updatedItem: OverheadItem) => void;
   deleteOverheadItem: (itemId: string) => void;
+  addTransportItem: (item: TransportItem) => void;
+  updateTransportItem: (updatedItem: TransportItem) => void;
+  deleteTransportItem: (itemId: string) => void;
   setLaborSettings: (settings: LaborSettings) => void;
 }
 
@@ -65,6 +70,7 @@ export default function AppLayout({
   const [packaging, setPackaging] = useState<PriceList[]>([]);
   const [laborSettings, setLaborSettings] = useState<LaborSettings>(initialLaborSettingsData);
   const [overhead, setOverhead] = useState<OverheadItem[]>([]);
+  const [transport, setTransport] = useState<TransportItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -73,6 +79,7 @@ export default function AppLayout({
     setPackaging(getStoredData('packaging', initialPackagingData));
     setLaborSettings(getStoredData('laborSettings', initialLaborSettingsData));
     setOverhead(getStoredData('overhead', initialOverheadData));
+    setTransport(getStoredData('transport', initialTransportData));
     setIsLoading(false);
   }, []);
 
@@ -105,6 +112,12 @@ export default function AppLayout({
       localStorage.setItem('overhead', JSON.stringify(overhead));
     }
   }, [overhead, isLoading]);
+
+  useEffect(() => {
+    if(!isLoading) {
+      localStorage.setItem('transport', JSON.stringify(transport));
+    }
+  }, [transport, isLoading]);
 
 
   const addProduct = (product: Product) => {
@@ -151,6 +164,18 @@ export default function AppLayout({
     setOverhead((prev) => prev.filter((i) => i.id !== itemId));
   };
 
+  const addTransportItem = (item: TransportItem) => {
+    setTransport((prev) => [...prev, item]);
+  };
+
+  const updateTransportItem = (updatedItem: TransportItem) => {
+    setTransport((prev) => prev.map((i) => (i.id === updatedItem.id ? updatedItem : i)));
+  };
+
+  const deleteTransportItem = (itemId: string) => {
+    setTransport((prev) => prev.filter((i) => i.id !== itemId));
+  };
+
   const handleSetLaborSettings = (settings: LaborSettings) => {
     setLaborSettings(settings);
   };
@@ -161,6 +186,7 @@ export default function AppLayout({
     packaging,
     laborSettings,
     overhead,
+    transport,
     addProduct,
     updateProduct,
     addInventoryItem,
@@ -172,6 +198,9 @@ export default function AppLayout({
     addOverheadItem,
     updateOverheadItem,
     deleteOverheadItem,
+    addTransportItem,
+    updateTransportItem,
+    deleteTransportItem,
     setLaborSettings: handleSetLaborSettings,
   };
 

@@ -1,4 +1,3 @@
-
 'use client';
 
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
@@ -17,12 +16,14 @@ const formatCurrency = (value: number) =>
   new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 }).format(value);
 
 const DashboardContent = () => {
-    const { inventory, packaging, products, laborSettings, overhead } = useAppData();
+    const { inventory, packaging, products, laborSettings, overhead, transport } = useAppData();
     
     const totalInventoryValue = inventory.reduce((sum, item) => sum + (item.value), 0);
     const totalPackagingValue = packaging.reduce((sum, item) => sum + (item.value), 0);
     const totalMonthlyLabor = laborSettings.monthlyCost;
     const totalMonthlyCIF = overhead.reduce((sum, item) => sum + (item.monthlyValue * item.productionPercentage), 0);
+    const totalMonthlyTransport = transport.reduce((sum, item) => sum + (item.monthlyValue * item.productionPercentage), 0);
+    
     const firstProduct = products[0];
     const inventoryMap = new Map(inventory.map(item => [item.id, item]));
     const packagingMap = new Map(packaging.map(item => [item.id, item]));
@@ -50,11 +51,15 @@ const DashboardContent = () => {
     }, 0);
     const overheadCost = overheadRate * totalLaborHours;
 
+    const transportRate = laborSettings.totalMonthlyHours > 0 ? totalMonthlyTransport / laborSettings.totalMonthlyHours : 0;
+    const transportCost = transportRate * totalLaborHours;
+
     const chartData = [
         { name: "Materia Prima", cost: materialCost, fill: "var(--color-material)" },
         { name: "Empaque", cost: packagingCost, fill: "var(--color-packaging)" },
         { name: "Mano de Obra", cost: laborCost, fill: "var(--color-labor)" },
         { name: "CIF", cost: overheadCost, fill: "var(--color-overhead)" },
+        { name: "Transporte", cost: transportCost, fill: "var(--color-transport)" },
     ];
 
     const chartConfig = {
@@ -77,12 +82,16 @@ const DashboardContent = () => {
             label: "CIF",
             color: "hsl(var(--chart-3))",
         },
+        transport: {
+            label: "Transporte",
+            color: "hsl(var(--chart-4))",
+        },
     };
 
     return (
         <div className="flex flex-col gap-6">
             <PageHeader title="Dashboard" description="Bienvenido a ProdCost Pro. Aquí tienes un resumen de tu operación." />
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
                 <Card>
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                         <CardTitle className="text-sm font-medium">Valor Total Materia Prima</CardTitle>
@@ -106,7 +115,7 @@ const DashboardContent = () => {
                 <Card>
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                         <CardTitle className="text-sm font-medium">Mano de Obra Mensual</CardTitle>
-                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4 text-muted-foreground"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/></svg>
+                        <svg xmlns="http://wwws.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4 text-muted-foreground"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/></svg>
                     </CardHeader>
                     <CardContent>
                         <div className="text-2xl font-bold">{formatCurrency(totalMonthlyLabor)}</div>
@@ -121,6 +130,16 @@ const DashboardContent = () => {
                     <CardContent>
                         <div className="text-2xl font-bold">{formatCurrency(totalMonthlyCIF)}</div>
                         <p className="text-xs text-muted-foreground">Costos indirectos asignados a producción</p>
+                    </CardContent>
+                </Card>
+                <Card>
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                        <CardTitle className="text-sm font-medium">Transporte Mensual</CardTitle>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4 text-muted-foreground"><path d="M5 18H3c-.6 0-1-.4-1-1V7c0-.6.4-1 1-1h10c.6 0 1 .4 1 1v11"/><path d="M14 9h4l4 4v4h-8v-4h-4V9Z"/><path d="M18 18h-1.5c-.8 0-1.5-.7-1.5-1.5v0c0-.8.7-1.5 1.5-1.5H18"/><path d="M7 18H5.5c-.8 0-1.5-.7-1.5-1.5v0c0-.8.7-1.5 1.5-1.5H7"/></svg>
+                    </CardHeader>
+                    <CardContent>
+                        <div className="text-2xl font-bold">{formatCurrency(totalMonthlyTransport)}</div>
+                        <p className="text-xs text-muted-foreground">Costos de transporte asignados</p>
                     </CardContent>
                 </Card>
             </div>
@@ -160,5 +179,3 @@ const DashboardContent = () => {
 export default function DashboardPage() {
     return <DashboardContent />;
 }
-
-    

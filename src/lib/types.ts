@@ -46,3 +46,10 @@ export interface OverheadItem {
   monthlyValue: number;
   productionPercentage: number;
 }
+
+export interface TransportItem {
+  id: string;
+  concept: string;
+  monthlyValue: number;
+  productionPercentage: number;
+}

@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState } from 'react';
@@ -51,7 +50,7 @@ const formatPercentage = (value: number) =>
   }).format(value);
 
 const ReportsContent = () => {
-  const { products, inventory, packaging, laborSettings, overhead } = useAppData();
+  const { products, inventory, packaging, laborSettings, overhead, transport } = useAppData();
   const [selectedProductId, setSelectedProductId] = useState<string>(
     products[0]?.id || ''
   );
@@ -74,6 +73,16 @@ const ReportsContent = () => {
     laborSettings.totalMonthlyHours > 0
       ? totalCIF / laborSettings.totalMonthlyHours
       : 0;
+  
+  const totalTransport = transport.reduce(
+    (acc, item) => acc + item.monthlyValue * item.productionPercentage,
+    0
+  );
+  const transportRate =
+    laborSettings.totalMonthlyHours > 0
+      ? totalTransport / laborSettings.totalMonthlyHours
+      : 0;
+
 
   const calculateCosts = (product: Product | undefined) => {
     if (!product) {
@@ -82,6 +91,7 @@ const ReportsContent = () => {
         packagingCost: 0,
         laborCost: 0,
         overheadCost: 0,
+        transportCost: 0,
         totalCost: 0,
         unitCost: 0,
         salePrice: 0,
@@ -89,7 +99,7 @@ const ReportsContent = () => {
       };
     }
 
-    const rawMaterialCost = product.recipe.reduce((acc, ingredient) => {
+    const rawMaterialCost = (product.recipe || []).reduce((acc, ingredient) => {
       const item = inventoryMap.get(ingredient.inventoryId);
       return acc + (item ? item.unitValue * ingredient.quantity : 0);
     }, 0);
@@ -107,8 +117,9 @@ const ReportsContent = () => {
     const laborCost = totalLaborHours * hourRate;
 
     const overheadCost = totalLaborHours * cifRate;
+    const transportCost = totalLaborHours * transportRate;
 
-    const totalCost = rawMaterialCost + packagingCost + laborCost + overheadCost;
+    const totalCost = rawMaterialCost + packagingCost + laborCost + overheadCost + transportCost;
     const unitCost = product.batchSize > 0 ? totalCost / product.batchSize : 0;
 
     const salePrice = profitPercentage < 1 ? unitCost / (1 - profitPercentage) : unitCost;
@@ -119,6 +130,7 @@ const ReportsContent = () => {
       packagingCost,
       laborCost,
       overheadCost,
+      transportCost,
       totalCost,
       unitCost,
       salePrice,
@@ -131,6 +143,7 @@ const ReportsContent = () => {
     packagingCost,
     laborCost,
     overheadCost,
+    transportCost,
     totalCost,
     unitCost,
     salePrice,
@@ -145,6 +158,7 @@ const ReportsContent = () => {
       ['Material de Empaque', packagingCost],
       ['Mano de Obra', laborCost],
       ['Costos Indirectos de Fabricación (CIF)', overheadCost],
+      ['Transporte', transportCost],
       ['Costo Total del Lote (CTP)', totalCost],
       [`Costo Unitario de Producción (por ${selectedProduct.batchUnit})`, unitCost],
       ['Porcentaje de Rentabilidad', formatPercentage(profitPercentage)],
@@ -196,6 +210,7 @@ const ReportsContent = () => {
         ['Material de Empaque', formatCurrency(packagingCost)],
         ['Mano de Obra', formatCurrency(laborCost)],
         ['Costos Indirectos de Fabricación (CIF)', formatCurrency(overheadCost)],
+        ['Transporte', formatCurrency(transportCost)],
       ],
       foot: [
         [
@@ -333,6 +348,14 @@ const ReportsContent = () => {
                       {formatCurrency(overheadCost)}
                     </TableCell>
                   </TableRow>
+                  <TableRow>
+                    <TableCell className="font-medium">
+                      Transporte
+                    </TableCell>
+                    <TableCell className="text-right">
+                      {formatCurrency(transportCost)}
+                    </TableCell>
+                  </TableRow>
                   <TableRow className="bg-muted/50">
                     <TableHead>Costo Total del Lote (CTP)</TableHead>
                     <TableHead className="text-right font-bold text-lg">
@@ -405,7 +428,7 @@ const ReportsContent = () => {
                     <TableCell>Utilidad Estimada por Unidad</TableCell>
                     <TableCell className="text-right">
                       {formatCurrency(profitPerUnit)}
-                    </TableCell>
+                    </TableCell>                  
                   </TableRow>
                 </TableBody>
               </Table>
@@ -431,5 +454,3 @@ const ReportsContent = () => {
 export default function ReportsPage() {
     return <ReportsContent />;
 }
-
-    
