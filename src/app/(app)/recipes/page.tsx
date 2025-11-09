@@ -68,6 +68,7 @@ const productFormSchema = z.object({
   batchSize: z.coerce
     .number()
     .positive('El tamaño del lote debe ser positivo.'),
+  batchUnit: z.string().min(1, 'La unidad del lote es requerida.'),
   recipe: z.array(
     z.object({
       inventoryId: z.string().min(1, 'Debes seleccionar un ingrediente.'),
@@ -106,8 +107,12 @@ const RecipesContent = () => {
 
   const [newProductName, setNewProductName] = useState('');
   const [newProductBatchSize, setNewProductBatchSize] = useState(0);
+  const [newProductBatchUnit, setNewProductBatchUnit] = useState('unid.');
+
 
   const inventoryMap = new Map(inventory.map((item) => [item.id, item]));
+  const batchUnits = ['kg', 'g', 'lb', 'oz', 'unid.', 'l', 'ml', 'cc'];
+
 
   const calculateRecipeCost = (recipe: Ingredient[]) => {
     return recipe.reduce((acc, ingredient) => {
@@ -127,17 +132,19 @@ const RecipesContent = () => {
   });
 
   const handleAddProduct = () => {
-    if (!newProductName || newProductBatchSize <= 0) return;
+    if (!newProductName || newProductBatchSize <= 0 || !newProductBatchUnit) return;
     const newProduct: Product = {
       id: `prod-${Date.now()}`,
       name: newProductName,
       batchSize: newProductBatchSize,
+      batchUnit: newProductBatchUnit,
       recipe: [],
       laborProcesses: [], // Start with empty labor processes
     };
     addProduct(newProduct);
     setNewProductName('');
     setNewProductBatchSize(0);
+    setNewProductBatchUnit('unid.');
     setIsAddProductSheetOpen(false);
     setActiveTab(newProduct.id);
   };
@@ -157,6 +164,7 @@ const RecipesContent = () => {
             ...editingProduct,
             name: values.name,
             batchSize: values.batchSize,
+            batchUnit: values.batchUnit,
             recipe: values.recipe,
           };
         updateProduct(updatedProductData);
@@ -199,7 +207,7 @@ const RecipesContent = () => {
                       <CardTitle>{product.name}</CardTitle>
                       <CardDescription>
                         Costeo de materia prima para un lote de producción de{' '}
-                        {product.batchSize} lbs.
+                        {product.batchSize} {product.batchUnit}.
                       </CardDescription>
                     </div>
                     <Button
@@ -282,7 +290,7 @@ const RecipesContent = () => {
                     <div className="h-12 w-px bg-border hidden sm:block mx-4"></div>
                     <div className="flex flex-col items-end">
                       <p className="text-muted-foreground">
-                        Costo MP Unitario (por lb):
+                        Costo MP Unitario (por {product.batchUnit}):
                       </p>
                       <p className="text-xl font-bold">
                         {formatCurrency(unitCost)}
@@ -324,16 +332,33 @@ const RecipesContent = () => {
                 onChange={(e) => setNewProductName(e.target.value)}
               />
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="batch-size">Tamaño del Lote (lbs)</Label>
-              <Input
-                id="batch-size"
-                type="number"
-                value={newProductBatchSize}
-                onChange={(e) =>
-                  setNewProductBatchSize(parseFloat(e.target.value) || 0)
-                }
-              />
+            <div className='grid grid-cols-2 gap-4'>
+                <div className="space-y-2">
+                <Label htmlFor="batch-size">Tamaño del Lote</Label>
+                <Input
+                    id="batch-size"
+                    type="number"
+                    value={newProductBatchSize}
+                    onChange={(e) =>
+                    setNewProductBatchSize(parseFloat(e.target.value) || 0)
+                    }
+                />
+                </div>
+                <div className="space-y-2">
+                    <Label htmlFor="batch-unit">Unidad</Label>
+                    <Select value={newProductBatchUnit} onValueChange={setNewProductBatchUnit}>
+                        <SelectTrigger id="batch-unit">
+                            <SelectValue placeholder="Selecciona" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            {batchUnits.map((unit) => (
+                                <SelectItem key={unit} value={unit}>
+                                    {unit}
+                                </SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+                </div>
             </div>
           </div>
           <SheetFooter className="pt-6">
@@ -377,19 +402,48 @@ const RecipesContent = () => {
                     </FormItem>
                   )}
                 />
-                <FormField
-                  control={form.control}
-                  name="batchSize"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Tamaño del Lote (lbs)</FormLabel>
-                      <FormControl>
-                        <Input type="number" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                <div className="grid grid-cols-2 gap-4">
+                    <FormField
+                    control={form.control}
+                    name="batchSize"
+                    render={({ field }) => (
+                        <FormItem>
+                        <FormLabel>Tamaño del Lote</FormLabel>
+                        <FormControl>
+                            <Input type="number" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                        </FormItem>
+                    )}
+                    />
+                    <FormField
+                        control={form.control}
+                        name="batchUnit"
+                        render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>Unidad</FormLabel>
+                                <Select
+                                onValueChange={field.onChange}
+                                defaultValue={field.value}
+                                >
+                                <FormControl>
+                                    <SelectTrigger>
+                                    <SelectValue placeholder="Selecciona una unidad" />
+                                    </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                    {batchUnits.map((unit) => (
+                                    <SelectItem key={unit} value={unit}>
+                                        {unit}
+                                    </SelectItem>
+                                    ))}
+                                </SelectContent>
+                                </Select>
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+                </div>
                 <div>
                   <h4 className="font-medium mb-2">
                     Ingredientes de la Receta

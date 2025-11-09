@@ -135,10 +135,10 @@ const ReportsContent = () => {
       ['Mano de Obra', laborCost],
       ['Costos Indirectos de Fabricación (CIF)', overheadCost],
       ['Costo Total del Lote (CTP)', totalCost],
-      ['Costo Unitario de Producción (por lb)', unitCost],
+      [`Costo Unitario de Producción (por ${selectedProduct.batchUnit})`, unitCost],
       ['Porcentaje de Rentabilidad', formatPercentage(profitPercentage)],
-      ['Precio de Venta Sugerido (por lb)', salePrice],
-      ['Utilidad por Unidad (por lb)', profitPerUnit],
+      [`Precio de Venta Sugerido (por ${selectedProduct.batchUnit})`, salePrice],
+      [`Utilidad por Unidad (por ${selectedProduct.batchUnit})`, profitPerUnit],
     ];
 
     const csvContent = [
@@ -174,7 +174,7 @@ const ReportsContent = () => {
     doc.setFontSize(14);
     doc.text(`Producto: ${selectedProduct.name}`, 14, 45);
     doc.setFontSize(10);
-    doc.text(`Tamaño del Lote: ${selectedProduct.batchSize} lbs`, 14, 52);
+    doc.text(`Tamaño del Lote: ${selectedProduct.batchSize} ${selectedProduct.batchUnit}`, 14, 52);
 
     // Cost Table
     autoTable(doc, {
@@ -203,7 +203,7 @@ const ReportsContent = () => {
     // Pricing Table
     autoTable(doc, {
       startY: finalY,
-      head: [['Precio y Rentabilidad', 'Valor por Unidad (lb)']],
+      head: [[`Precio y Rentabilidad`, `Valor por Unidad (${selectedProduct.batchUnit})`]],
       body: [
         ['Costo Unitario de Producción', formatCurrency(unitCost)],
         ['Margen de Rentabilidad Deseado', formatPercentage(profitPercentage)],
@@ -283,7 +283,7 @@ const ReportsContent = () => {
               </CardTitle>
               <CardDescription>
                 Costo consolidado para un lote de {selectedProduct.batchSize}{' '}
-                lbs.
+                {selectedProduct.batchUnit}.
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -327,7 +327,7 @@ const ReportsContent = () => {
             <CardFooter className="justify-end">
               <div className="flex flex-col items-end">
                 <p className="text-muted-foreground">
-                  Costo Unitario de Producción (por lb):
+                  Costo Unitario de Producción (por {selectedProduct.batchUnit}):
                 </p>
                 <p className="text-2xl font-bold text-primary">
                   {formatCurrency(unitCost)}
@@ -350,7 +350,7 @@ const ReportsContent = () => {
                   <TableRow>
                     <TableHead>Concepto</TableHead>
                     <TableHead className="text-right">
-                      Valor por Unidad (lb)
+                      Valor por Unidad ({selectedProduct.batchUnit})
                     </TableHead>
                   </TableRow>
                 </TableHeader>
@@ -395,7 +395,7 @@ const ReportsContent = () => {
             <CardFooter className="justify-end bg-accent/10 rounded-b-lg">
               <div className="flex flex-col items-end">
                 <p className="text-muted-foreground">
-                  Precio de Venta Sugerido (por lb):
+                  Precio de Venta Sugerido (por {selectedProduct.batchUnit}):
                 </p>
                 <p className="text-2xl font-bold text-accent-foreground">
                   {formatCurrency(salePrice)}

@@ -15,6 +15,7 @@ export const productsData: Product[] = [
     id: 'prod-1',
     name: 'Pan Dulce',
     batchSize: 10,
+    batchUnit: 'lbs',
     recipe: [
       { inventoryId: '1', quantity: 5 },
       { inventoryId: '2', quantity: 2 },
@@ -32,6 +33,7 @@ export const productsData: Product[] = [
     id: 'prod-2',
     name: 'Pan Salado',
     batchSize: 15,
+    batchUnit: 'lbs',
     recipe: [
       { inventoryId: '1', quantity: 8 },
       { inventoryId: '5', quantity: 0.2 },

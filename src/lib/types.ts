@@ -23,6 +23,7 @@ export interface Product {
   id:string;
   name: string;
   batchSize: number;
+  batchUnit: string;
   recipe: Ingredient[];
   laborProcesses: LaborProcess[];
 }
