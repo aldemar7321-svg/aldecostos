@@ -1,3 +1,4 @@
+
 'use client';
 
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
@@ -31,10 +32,10 @@ const DashboardContent = () => {
         return sum + (item ? item.unitValue * ing.quantity : 0);
     }, 0) : 0;
 
-    const packagingCost = firstProduct?.packaging ? firstProduct.packaging.reduce((sum, pkg) => {
+    const packagingCost = (firstProduct?.packaging || []).reduce((sum, pkg) => {
         const item = packagingMap.get(pkg.packagingId);
         return sum + (item ? item.unitValue * pkg.quantity : 0);
-    }, 0) : 0;
+    }, 0);
 
     const hourRate = laborSettings.monthlyCost / laborSettings.totalMonthlyHours;
     const laborCost = firstProduct?.laborProcesses ? firstProduct.laborProcesses.reduce((sum, proc) => {
@@ -95,7 +96,7 @@ const DashboardContent = () => {
                 <Card>
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                         <CardTitle className="text-sm font-medium">Valor Total Empaques</CardTitle>
-                         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-4 w-4 text-muted-foreground"><path d="M21 10V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10"/><path d="M14 15v6"/><path d="M17 21v-8.5a3.5 3.5 0 0 0-7 0V21"/><path d="M7 21h10"/></svg>
+                         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4 text-muted-foreground"><path d="M21 10V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10"/><path d="M14 15v6"/><path d="M17 21v-8.5a3.5 3.5 0 0 0-7 0V21"/><path d="M7 21h10"/></svg>
                     </CardHeader>
                     <CardContent>
                         <div className="text-2xl font-bold">{formatCurrency(totalPackagingValue)}</div>
@@ -159,3 +160,5 @@ const DashboardContent = () => {
 export default function DashboardPage() {
     return <DashboardContent />;
 }
+
+    
