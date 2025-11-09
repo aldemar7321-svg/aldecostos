@@ -50,7 +50,7 @@ const formatPercentage = (value: number) =>
   }).format(value);
 
 const ReportsContent = () => {
-  const { products, inventory, laborSettings, overhead } = useAppData();
+  const { products, inventory, packaging, laborSettings, overhead } = useAppData();
   const [selectedProductId, setSelectedProductId] = useState<string>(
     products[0]?.id || ''
   );
@@ -58,6 +58,7 @@ const ReportsContent = () => {
   const selectedProduct = products.find((p) => p.id === selectedProductId);
 
   const inventoryMap = new Map(inventory.map((item) => [item.id, item]));
+  const packagingMap = new Map(packaging.map((item) => [item.id, item]));
 
   // Pre-calculate rates
   const hourRate =
@@ -77,6 +78,7 @@ const ReportsContent = () => {
     if (!product) {
       return {
         rawMaterialCost: 0,
+        packagingCost: 0,
         laborCost: 0,
         overheadCost: 0,
         totalCost: 0,
@@ -90,6 +92,11 @@ const ReportsContent = () => {
       const item = inventoryMap.get(ingredient.inventoryId);
       return acc + (item ? item.unitValue * ingredient.quantity : 0);
     }, 0);
+    
+    const packagingCost = product.packaging.reduce((acc, pkg) => {
+      const item = packagingMap.get(pkg.packagingId);
+      return acc + (item ? item.unitValue * pkg.quantity : 0);
+    }, 0);
 
     const totalLaborHours = product.laborProcesses.reduce((acc, process) => {
       const timeInHours =
@@ -100,7 +107,7 @@ const ReportsContent = () => {
 
     const overheadCost = totalLaborHours * cifRate;
 
-    const totalCost = rawMaterialCost + laborCost + overheadCost;
+    const totalCost = rawMaterialCost + packagingCost + laborCost + overheadCost;
     const unitCost = product.batchSize > 0 ? totalCost / product.batchSize : 0;
 
     const salePrice = profitPercentage < 1 ? unitCost / (1 - profitPercentage) : unitCost;
@@ -108,6 +115,7 @@ const ReportsContent = () => {
 
     return {
       rawMaterialCost,
+      packagingCost,
       laborCost,
       overheadCost,
       totalCost,
@@ -119,6 +127,7 @@ const ReportsContent = () => {
 
   const {
     rawMaterialCost,
+    packagingCost,
     laborCost,
     overheadCost,
     totalCost,
@@ -132,6 +141,7 @@ const ReportsContent = () => {
     const headers = ['Componente de Costo', 'Costo del Lote', 'Costo Unitario'];
     const data = [
       ['Materia Prima', rawMaterialCost],
+      ['Material de Empaque', packagingCost],
       ['Mano de Obra', laborCost],
       ['Costos Indirectos de Fabricación (CIF)', overheadCost],
       ['Costo Total del Lote (CTP)', totalCost],
@@ -182,6 +192,7 @@ const ReportsContent = () => {
       head: [['Componente de Costo', 'Costo del Lote']],
       body: [
         ['Materia Prima', formatCurrency(rawMaterialCost)],
+        ['Material de Empaque', formatCurrency(packagingCost)],
         ['Mano de Obra', formatCurrency(laborCost)],
         ['Costos Indirectos de Fabricación (CIF)', formatCurrency(overheadCost)],
       ],
@@ -299,6 +310,12 @@ const ReportsContent = () => {
                     <TableCell className="font-medium">Materia Prima</TableCell>
                     <TableCell className="text-right">
                       {formatCurrency(rawMaterialCost)}
+                    </TableCell>
+                  </TableRow>
+                  <TableRow>
+                    <TableCell className="font-medium">Material de Empaque</TableCell>
+                    <TableCell className="text-right">
+                      {formatCurrency(packagingCost)}
                     </TableCell>
                   </TableRow>
                   <TableRow>

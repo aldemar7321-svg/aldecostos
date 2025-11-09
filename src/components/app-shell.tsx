@@ -9,6 +9,7 @@ import {
   Factory,
   FileText,
   LayoutDashboard,
+  Package,
   Users,
   Warehouse,
 } from "lucide-react";
@@ -27,7 +28,8 @@ import { Button } from "@/components/ui/button";
 
 const navItems = [
   { href: "/dashboard", icon: LayoutDashboard, label: "Dashboard" },
-  { href: "/inventory", icon: Warehouse, label: "Inventario" },
+  { href: "/inventory", icon: Warehouse, label: "Materia Prima" },
+  { href: "/packaging", icon: Package, label: "Empaques" },
   { href: "/recipes", icon: BookHeart, label: "Recetas" },
   { href: "/labor", icon: Users, label: "Mano de Obra" },
   { href: "/overhead", icon: Factory, label: "Costos Indirectos" },

@@ -4,6 +4,7 @@ import { createContext, useContext, useState, useEffect } from 'react';
 import AppShell from '@/components/app-shell';
 import {
   inventoryData as initialInventoryData,
+  packagingData as initialPackagingData,
   productsData as initialProductsData,
   laborSettingsData as initialLaborSettingsData,
   overheadData as initialOverheadData,
@@ -14,6 +15,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 interface AppDataContextType {
   products: Product[];
   inventory: PriceList[];
+  packaging: PriceList[];
   laborSettings: LaborSettings;
   overhead: OverheadItem[];
   addProduct: (product: Product) => void;
@@ -21,6 +23,9 @@ interface AppDataContextType {
   addInventoryItem: (item: PriceList) => void;
   updateInventoryItem: (updatedItem: PriceList) => void;
   deleteInventoryItem: (itemId: string) => void;
+  addPackagingItem: (item: PriceList) => void;
+  updatePackagingItem: (updatedItem: PriceList) => void;
+  deletePackagingItem: (itemId: string) => void;
   addOverheadItem: (item: OverheadItem) => void;
   updateOverheadItem: (updatedItem: OverheadItem) => void;
   deleteOverheadItem: (itemId: string) => void;
@@ -42,7 +47,12 @@ const getStoredData = <T,>(key: string, fallback: T): T => {
         return fallback;
     }
     const stored = localStorage.getItem(key);
-    return stored ? JSON.parse(stored) : fallback;
+    try {
+        return stored ? JSON.parse(stored) : fallback;
+    } catch (error) {
+        console.error(`Error parsing stored data for key "${key}":`, error);
+        return fallback;
+    }
 }
 
 export default function AppLayout({
@@ -52,6 +62,7 @@ export default function AppLayout({
 }) {
   const [products, setProducts] = useState<Product[]>([]);
   const [inventory, setInventory] = useState<PriceList[]>([]);
+  const [packaging, setPackaging] = useState<PriceList[]>([]);
   const [laborSettings, setLaborSettings] = useState<LaborSettings>(initialLaborSettingsData);
   const [overhead, setOverhead] = useState<OverheadItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -59,6 +70,7 @@ export default function AppLayout({
   useEffect(() => {
     setProducts(getStoredData('products', initialProductsData));
     setInventory(getStoredData('inventory', initialInventoryData));
+    setPackaging(getStoredData('packaging', initialPackagingData));
     setLaborSettings(getStoredData('laborSettings', initialLaborSettingsData));
     setOverhead(getStoredData('overhead', initialOverheadData));
     setIsLoading(false);
@@ -75,6 +87,12 @@ export default function AppLayout({
       localStorage.setItem('inventory', JSON.stringify(inventory));
     }
   }, [inventory, isLoading]);
+  
+  useEffect(() => {
+    if(!isLoading) {
+      localStorage.setItem('packaging', JSON.stringify(packaging));
+    }
+  }, [packaging, isLoading]);
 
   useEffect(() => {
     if(!isLoading) {
@@ -109,6 +127,18 @@ export default function AppLayout({
     setInventory((prev) => prev.filter((i) => i.id !== itemId));
   };
   
+  const addPackagingItem = (item: PriceList) => {
+    setPackaging((prev) => [...prev, item]);
+  };
+
+  const updatePackagingItem = (updatedItem: PriceList) => {
+    setPackaging((prev) => prev.map((i) => (i.id === updatedItem.id ? updatedItem : i)));
+  };
+  
+  const deletePackagingItem = (itemId: string) => {
+    setPackaging((prev) => prev.filter((i) => i.id !== itemId));
+  };
+
   const addOverheadItem = (item: OverheadItem) => {
     setOverhead((prev) => [...prev, item]);
   };
@@ -128,6 +158,7 @@ export default function AppLayout({
   const state = {
     products,
     inventory,
+    packaging,
     laborSettings,
     overhead,
     addProduct,
@@ -135,6 +166,9 @@ export default function AppLayout({
     addInventoryItem,
     updateInventoryItem,
     deleteInventoryItem,
+    addPackagingItem,
+    updatePackagingItem,
+    deletePackagingItem,
     addOverheadItem,
     updateOverheadItem,
     deleteOverheadItem,
@@ -145,7 +179,7 @@ export default function AppLayout({
     <AppDataContext.Provider value={state}>
       <AppShell>
         {isLoading ? (
-            <div className="space-y-6">
+            <div className="space-y-6 p-6">
                 <div className="flex justify-between items-center">
                     <Skeleton className="h-9 w-64" />
                     <div className="flex gap-2">

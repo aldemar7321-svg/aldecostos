@@ -11,6 +11,11 @@ export interface Ingredient {
   quantity: number;
 }
 
+export interface PackagingItem {
+  packagingId: string;
+  quantity: number;
+}
+
 export interface LaborProcess {
   id: string;
   name: string;
@@ -25,6 +30,7 @@ export interface Product {
   batchSize: number;
   batchUnit: string;
   recipe: Ingredient[];
+  packaging: PackagingItem[];
   laborProcesses: LaborProcess[];
 }
 

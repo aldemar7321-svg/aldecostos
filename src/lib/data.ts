@@ -4,6 +4,10 @@ export const inventoryData: PriceList[] = [
   { id: '1', product: 'Harina', measure: 'kg', value: 50, unitValue: 1.0 },
 ];
 
+export const packagingData: PriceList[] = [
+  { id: 'pkg-1', product: 'Bolsa Plástica', measure: 'unid.', value: 100, unitValue: 0.1 },
+];
+
 export const productsData: Product[] = [
   {
     id: 'prod-1',
@@ -12,6 +16,9 @@ export const productsData: Product[] = [
     batchUnit: 'unid.',
     recipe: [
       { inventoryId: '1', quantity: 5 },
+    ],
+    packaging: [
+      { packagingId: 'pkg-1', quantity: 10 },
     ],
     laborProcesses: [
       { id: 'lp-1', name: 'Proceso de Ejemplo', time: 30, timeUnit: 'minutos', operators: 1 },

@@ -75,7 +75,7 @@ const formatCurrency = (value: number) =>
   }).format(value);
 
 const formSchema = z.object({
-  product: z.string().min(1, 'El nombre del producto es requerido.'),
+  product: z.string().min(1, 'El nombre del material es requerido.'),
   measure: z.string().min(1, 'La unidad de medida es requerida.'),
   value: z.coerce.number().positive('El valor debe ser un número positivo.'),
   unitValue: z.coerce
@@ -83,8 +83,8 @@ const formSchema = z.object({
     .positive('El valor unitario debe ser un número positivo.'),
 });
 
-const InventoryContent = () => {
-  const { inventory, addInventoryItem, updateInventoryItem, deleteInventoryItem } = useAppData();
+const PackagingContent = () => {
+  const { packaging, addPackagingItem, updatePackagingItem, deletePackagingItem } = useAppData();
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<PriceList | null>(null);
   const [isAlertOpen, setIsAlertOpen] = useState(false);
@@ -119,7 +119,7 @@ const InventoryContent = () => {
 
   const handleDelete = () => {
     if (itemToDelete) {
-      deleteInventoryItem(itemToDelete);
+      deletePackagingItem(itemToDelete);
       setItemToDelete(null);
     }
     setIsAlertOpen(false);
@@ -127,13 +127,13 @@ const InventoryContent = () => {
 
   function onSubmit(values: z.infer<typeof formSchema>) {
     if (editingItem) {
-      updateInventoryItem({ ...editingItem, ...values });
+      updatePackagingItem({ ...editingItem, ...values });
     } else {
-      const newPriceList: PriceList = {
-        id: `pl-${Date.now()}`,
+      const newPackagingItem: PriceList = {
+        id: `pkg-${Date.now()}`,
         ...values,
       };
-      addInventoryItem(newPriceList);
+      addPackagingItem(newPackagingItem);
     }
     form.reset();
     setIsSheetOpen(false);
@@ -142,14 +142,14 @@ const InventoryContent = () => {
 
   const handleExport = () => {
     const headers = [
-      'Producto',
+      'Material',
       'Medida de Compra',
       'Valor de Compra',
       'Valor Unitario',
     ];
     const csvContent = [
       headers.join(','),
-      ...inventory.map((item) =>
+      ...packaging.map((item) =>
         [item.product, item.measure, item.value, item.unitValue].join(',')
       ),
     ].join('\n');
@@ -161,7 +161,7 @@ const InventoryContent = () => {
     }
     const url = URL.createObjectURL(blob);
     link.href = url;
-    link.setAttribute('download', 'inventario_materia_prima.csv');
+    link.setAttribute('download', 'empaques.csv');
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -172,8 +172,8 @@ const InventoryContent = () => {
   return (
     <div className="flex flex-col gap-6">
       <PageHeader
-        title="Inventario de Materia Prima"
-        description="Gestiona la lista de precios de tus ingredientes."
+        title="Inventario de Material de Empaque"
+        description="Gestiona la lista de precios de tus empaques y envases."
       >
         <Button variant="outline" size="sm" onClick={handleExport}>
           <Download className="mr-2 h-4 w-4" />
@@ -181,22 +181,22 @@ const InventoryContent = () => {
         </Button>
         <Button size="sm" onClick={handleAddNew}>
           <PlusCircle className="mr-2 h-4 w-4" />
-          Añadir Ingrediente
+          Añadir Empaque
         </Button>
       </PageHeader>
       <Card>
         <CardHeader>
-          <CardTitle>Lista de Precios</CardTitle>
+          <CardTitle>Lista de Precios de Empaques</CardTitle>
           <CardDescription>
             El 'Valor Unitario' es el costo real utilizado en todos los cálculos
-            de recetas.
+            de costeo de producto.
           </CardDescription>
         </CardHeader>
         <CardContent>
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Producto</TableHead>
+                <TableHead>Material</TableHead>
                 <TableHead className="text-center">Medida de Compra</TableHead>
                 <TableHead className="text-right">Valor de Compra</TableHead>
                 <TableHead className="text-right font-medium text-primary">
@@ -206,7 +206,7 @@ const InventoryContent = () => {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {inventory?.map((item) => (
+              {packaging?.map((item) => (
                 <TableRow key={item.id}>
                   <TableCell className="font-medium">{item.product}</TableCell>
                   <TableCell className="text-center">{item.measure}</TableCell>
@@ -241,13 +241,13 @@ const InventoryContent = () => {
                   </TableCell>
                 </TableRow>
               ))}
-              {inventory?.length === 0 && (
+              {packaging?.length === 0 && (
                 <TableRow>
                   <TableCell
                     colSpan={5}
                     className="text-center text-muted-foreground py-8"
                   >
-                    No has añadido ningún ingrediente todavía.
+                    No has añadido ningún empaque todavía.
                   </TableCell>
                 </TableRow>
               )}
@@ -259,12 +259,12 @@ const InventoryContent = () => {
         <SheetContent>
           <SheetHeader>
             <SheetTitle>
-              {editingItem ? 'Editar Ingrediente' : 'Añadir Nuevo Ingrediente'}
+              {editingItem ? 'Editar Empaque' : 'Añadir Nuevo Empaque'}
             </SheetTitle>
             <SheetDescription>
               {editingItem
-                ? 'Modifica los detalles del ingrediente.'
-                : 'Completa los detalles del nuevo ingrediente o materia prima.'}
+                ? 'Modifica los detalles del material de empaque.'
+                : 'Completa los detalles del nuevo material de empaque.'}
             </SheetDescription>
           </SheetHeader>
           <Form {...form}>
@@ -277,9 +277,9 @@ const InventoryContent = () => {
                 name="product"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Nombre del Producto</FormLabel>
+                    <FormLabel>Nombre del Material</FormLabel>
                     <FormControl>
-                      <Input placeholder="Ej: Harina de trigo" {...field} />
+                      <Input placeholder="Ej: Bolsa plástica" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -343,7 +343,7 @@ const InventoryContent = () => {
                   <Button variant="outline">Cancelar</Button>
                 </SheetClose>
                 <Button type="submit">
-                  {editingItem ? 'Guardar Cambios' : 'Guardar Ingrediente'}
+                  {editingItem ? 'Guardar Cambios' : 'Guardar Empaque'}
                 </Button>
               </SheetFooter>
             </form>
@@ -356,7 +356,7 @@ const InventoryContent = () => {
             <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
             <AlertDialogDescription>
               Esta acción no se puede deshacer. Esto eliminará permanentemente
-              el ingrediente.
+              el material de empaque.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -375,6 +375,6 @@ const InventoryContent = () => {
 };
 
 
-export default function InventoryPage() {
-    return <InventoryContent />;
+export default function PackagingPage() {
+    return <PackagingContent />;
 }
