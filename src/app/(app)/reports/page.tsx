@@ -28,11 +28,12 @@ import {
 } from '@/components/ui/select';
 import { PageHeader } from '@/components/page-header';
 import { Button } from '@/components/ui/button';
-import { Download, FileText } from 'lucide-react';
+import { Download, FileText, Edit } from 'lucide-react';
 import type { Product } from '@/lib/types';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { useAppData } from '@/app/(app)/layout';
+import Link from 'next/link';
 
 
 const formatCurrency = (value: number) =>
@@ -264,6 +265,13 @@ const ReportsContent = () => {
             </SelectContent>
           </Select>
         </div>
+        <div className='flex md:justify-end'>
+            <Button asChild variant="outline" size="sm">
+                <Link href={`/recipes?product=${selectedProductId}`}>
+                    <Edit className="mr-2 h-4 w-4" /> Editar Producto y Receta
+                </Link>
+            </Button>
+        </div>
       </div>
 
       {selectedProduct && (
@@ -368,7 +376,7 @@ const ReportsContent = () => {
                               parseFloat(e.target.value) / 100
                             )
                           }
-                          className="w-20 h-8 text-right"
+                          className="w-24 h-8 text-right"
                           placeholder="Ej: 30"
                         />
                         <span>%</span>

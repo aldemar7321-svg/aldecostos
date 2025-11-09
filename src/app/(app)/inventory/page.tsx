@@ -167,7 +167,7 @@ const InventoryContent = () => {
     document.body.removeChild(link);
   };
 
-  const units = ['kg', 'g', 'lb', 'oz', 'unid.', 'l', 'ml'];
+  const units = ['kg', 'g', 'lb', 'oz', 'unid.', 'l', 'ml', 'cc'];
 
   return (
     <div className="flex flex-col gap-6">

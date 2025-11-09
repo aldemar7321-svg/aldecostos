@@ -21,7 +21,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import type { Ingredient, Product, PriceList } from '@/lib/types';
+import type { Ingredient, Product } from '@/lib/types';
 import { PageHeader } from '@/components/page-header';
 import { Button } from '@/components/ui/button';
 import { PlusCircle, Trash2, Edit } from 'lucide-react';
@@ -52,6 +52,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { useAppData } from '@/app/(app)/layout';
+import { useSearchParams } from 'next/navigation';
 
 
 const formatCurrency = (value: number) =>
@@ -81,8 +82,22 @@ const RecipesContent = () => {
   const [isAddProductSheetOpen, setIsAddProductSheetOpen] = useState(false);
   const [isEditProductSheetOpen, setIsEditProductSheetOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
-  const [activeTab, setActiveTab] = useState(products[0]?.id || '');
   
+  const searchParams = useSearchParams();
+  const productIdFromQuery = searchParams.get('product');
+
+  const [activeTab, setActiveTab] = useState(productIdFromQuery || products[0]?.id || '');
+  
+  useEffect(() => {
+    if (productIdFromQuery) {
+        setActiveTab(productIdFromQuery);
+        const productToEdit = products.find(p => p.id === productIdFromQuery);
+        if (productToEdit) {
+            handleEditProductClick(productToEdit);
+        }
+    }
+  }, [productIdFromQuery, products]);
+
   useEffect(() => {
     if(!activeTab && products.length > 0) {
       setActiveTab(products[0].id);
