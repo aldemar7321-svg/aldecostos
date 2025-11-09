@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState } from 'react';
@@ -378,3 +379,5 @@ const PackagingContent = () => {
 export default function PackagingPage() {
     return <PackagingContent />;
 }
+
+    

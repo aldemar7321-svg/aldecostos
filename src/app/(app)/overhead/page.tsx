@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState } from 'react';
@@ -231,7 +232,7 @@ const OverheadContent = () => {
             </TableBody>
           </Table>
         </CardContent>
-        <CardFooter className="flex-col items-end gap-2 sm:flex-row sm:justify-end">
+        <CardFooter className="flex-col items-end gap-2 sm:flex-row sm:justify-end sm:items-center">
           <div className="flex flex-col items-end">
             <p className="text-muted-foreground">CIF Total de Producción:</p>
             <p className="text-xl font-bold">{formatCurrency(totalCIF)}</p>
@@ -338,3 +339,5 @@ const OverheadContent = () => {
 export default function OverheadPage() {
     return <OverheadContent />;
 }
+
+    

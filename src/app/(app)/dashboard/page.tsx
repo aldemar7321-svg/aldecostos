@@ -37,17 +37,17 @@ const DashboardContent = () => {
         return sum + (item ? item.unitValue * pkg.quantity : 0);
     }, 0);
 
-    const hourRate = laborSettings.monthlyCost / laborSettings.totalMonthlyHours;
-    const laborCost = firstProduct?.laborProcesses ? firstProduct.laborProcesses.reduce((sum, proc) => {
+    const hourRate = laborSettings.totalMonthlyHours > 0 ? laborSettings.monthlyCost / laborSettings.totalMonthlyHours : 0;
+    const laborCost = (firstProduct?.laborProcesses || []).reduce((sum, proc) => {
         const timeInHours = proc.timeUnit === 'minutos' ? proc.time / 60 : proc.time;
         return sum + (timeInHours * hourRate * proc.operators);
-    }, 0) : 0;
+    }, 0);
 
-    const overheadRate = totalMonthlyCIF / laborSettings.totalMonthlyHours;
-    const totalLaborHours = firstProduct?.laborProcesses ? firstProduct.laborProcesses.reduce((sum, proc) => {
+    const overheadRate = laborSettings.totalMonthlyHours > 0 ? totalMonthlyCIF / laborSettings.totalMonthlyHours : 0;
+    const totalLaborHours = (firstProduct?.laborProcesses || []).reduce((sum, proc) => {
         const timeInHours = proc.timeUnit === 'minutos' ? proc.time / 60 : proc.time;
         return sum + timeInHours;
-    }, 0) : 0;
+    }, 0);
     const overheadCost = overheadRate * totalLaborHours;
 
     const chartData = [
@@ -96,7 +96,7 @@ const DashboardContent = () => {
                 <Card>
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                         <CardTitle className="text-sm font-medium">Valor Total Empaques</CardTitle>
-                         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4 text-muted-foreground"><path d="M21 10V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10"/><path d="M14 15v6"/><path d="M17 21v-8.5a3.5 3.5 0 0 0-7 0V21"/><path d="M7 21h10"/></svg>
+                         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4 text-muted-foreground"><path d="M21 10V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10"/><path d="M14 15v6"/><path d="M17 21v-8.5a3.5 3.5 0 0 0-7 0V21"/><path d="M7 21h10"/></svg>
                     </CardHeader>
                     <CardContent>
                         <div className="text-2xl font-bold">{formatCurrency(totalPackagingValue)}</div>
@@ -106,7 +106,7 @@ const DashboardContent = () => {
                 <Card>
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                         <CardTitle className="text-sm font-medium">Mano de Obra Mensual</CardTitle>
-                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4 text-muted-foreground"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/></svg>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4 text-muted-foreground"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/></svg>
                     </CardHeader>
                     <CardContent>
                         <div className="text-2xl font-bold">{formatCurrency(totalMonthlyLabor)}</div>
@@ -116,7 +116,7 @@ const DashboardContent = () => {
                 <Card>
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                         <CardTitle className="text-sm font-medium">CIF Total Mensual</CardTitle>
-                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4 text-muted-foreground"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" /></svg>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4 text-muted-foreground"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" /></svg>
                     </CardHeader>
                     <CardContent>
                         <div className="text-2xl font-bold">{formatCurrency(totalMonthlyCIF)}</div>

@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState } from 'react';
@@ -93,12 +94,12 @@ const ReportsContent = () => {
       return acc + (item ? item.unitValue * ingredient.quantity : 0);
     }, 0);
     
-    const packagingCost = product.packaging.reduce((acc, pkg) => {
+    const packagingCost = (product.packaging || []).reduce((acc, pkg) => {
       const item = packagingMap.get(pkg.packagingId);
       return acc + (item ? item.unitValue * pkg.quantity : 0);
     }, 0);
 
-    const totalLaborHours = product.laborProcesses.reduce((acc, process) => {
+    const totalLaborHours = (product.laborProcesses || []).reduce((acc, process) => {
       const timeInHours =
         process.timeUnit === 'minutos' ? process.time / 60 : process.time;
       return acc + timeInHours * process.operators;
@@ -430,3 +431,5 @@ const ReportsContent = () => {
 export default function ReportsPage() {
     return <ReportsContent />;
 }
+
+    

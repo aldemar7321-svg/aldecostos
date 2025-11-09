@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -96,10 +97,10 @@ const RecipesContent = () => {
   const [activeTab, setActiveTab] = useState(productIdFromQuery || products[0]?.id || '');
   
   useEffect(() => {
-    if (productIdFromQuery) {
+    if (productIdFromQuery && products.some(p => p.id === productIdFromQuery)) {
         setActiveTab(productIdFromQuery);
         const productToEdit = products.find(p => p.id === productIdFromQuery);
-        if (productToEdit) {
+        if (productToEdit && !isEditProductSheetOpen) {
             handleEditProductClick(productToEdit);
         }
     }
@@ -130,7 +131,7 @@ const RecipesContent = () => {
   };
   
   const calculatePackagingCost = (packagingItems: PackagingItem[]) => {
-    return packagingItems.reduce((acc, packagingItem) => {
+    return (packagingItems || []).reduce((acc, packagingItem) => {
       const item = packagingMap.get(packagingItem.packagingId);
       const itemCost = item ? item.unitValue * packagingItem.quantity : 0;
       return acc + itemCost;
@@ -322,7 +323,7 @@ const RecipesContent = () => {
                           </TableRow>
                         </TableHeader>
                         <TableBody>
-                          {product.packaging.length > 0 ? (
+                          {product.packaging && product.packaging.length > 0 ? (
                             product.packaging.map((pkgItem, index) => {
                               const item = packagingMap.get(
                                 pkgItem.packagingId
@@ -714,3 +715,5 @@ const RecipesContent = () => {
 export default function RecipesPage() {
     return <RecipesContent />;
 }
+
+    
