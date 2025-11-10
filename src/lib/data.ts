@@ -5,7 +5,7 @@ export const inventoryData: PriceList[] = [
 ];
 
 export const packagingData: PriceList[] = [
-  { id: 'pkg-1', product: 'Botella PET 1L', measure: 'unid.', value: 500, unitValue: 0.5 },
+  { id: 'pkg-1', product: 'Botella PET 1L', measure: 'unid.', value: 500, unitValue: 500 },
 ];
 
 export const productsData: Product[] = [
