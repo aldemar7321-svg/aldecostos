@@ -40,23 +40,18 @@ export interface LaborSettings {
   workHoursPerDay: number;
 }
 
-export interface OverheadItem {
+export type AllocationBasis = 'labor' | 'material' | 'units';
+
+export interface IndirectCostItem {
   id: string;
   concept: string;
   monthlyValue: number;
   productionPercentage: number;
+  allocationBasis: AllocationBasis;
 }
 
-export interface TransportItem {
-  id: string;
-  concept: string;
-  monthlyValue: number;
-  productionPercentage: number;
-}
+export interface OverheadItem extends IndirectCostItem {}
 
-export interface CapitalItem {
-  id: string;
-  concept: string;
-  monthlyValue: number;
-  productionPercentage: number;
-}
+export interface TransportItem extends IndirectCostItem {}
+
+export interface CapitalItem extends IndirectCostItem {}

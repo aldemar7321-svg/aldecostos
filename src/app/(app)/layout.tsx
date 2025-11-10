@@ -58,7 +58,15 @@ const getStoredData = <T,>(key: string, fallback: T): T => {
     }
     const stored = localStorage.getItem(key);
     try {
-        return stored ? JSON.parse(stored) : fallback;
+        if (!stored) return fallback;
+        const parsed = JSON.parse(stored);
+        // Basic migration/validation logic
+        if (key === 'overhead' || key === 'transport' || key === 'capital') {
+            if (Array.isArray(parsed) && parsed.length > 0 && !('allocationBasis' in parsed[0])) {
+                return (parsed as any[]).map(item => ({...item, allocationBasis: 'labor'})) as T;
+            }
+        }
+        return parsed;
     } catch (error) {
         console.error(`Error parsing stored data for key "${key}":`, error);
         return fallback;

@@ -60,7 +60,13 @@ import {
 } from '@/components/ui/alert-dialog';
 import type { OverheadItem } from '@/lib/types';
 import { useAppData } from '@/app/(app)/layout';
-
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 
 const formatCurrency = (value: number) =>
   new Intl.NumberFormat('es-CO', {
@@ -84,6 +90,7 @@ const formSchema = z.object({
     .number()
     .min(0, 'El porcentaje debe ser como mínimo 0.')
     .max(1, 'El porcentaje debe ser como máximo 1 (ej: 0.7 para 70%).'),
+  allocationBasis: z.enum(['labor', 'material', 'units']),
 });
 
 const OverheadContent = () => {
@@ -99,12 +106,13 @@ const OverheadContent = () => {
       concept: '',
       monthlyValue: 0,
       productionPercentage: 0,
+      allocationBasis: 'labor',
     },
   });
 
   const handleAddNew = () => {
     setEditingItem(null);
-    form.reset({ concept: '', monthlyValue: 0, productionPercentage: 0 });
+    form.reset({ concept: '', monthlyValue: 0, productionPercentage: 0, allocationBasis: 'labor' });
     setIsSheetOpen(true);
   };
   
@@ -146,6 +154,7 @@ const OverheadContent = () => {
     (acc, item) => acc + item.monthlyValue * item.productionPercentage,
     0
   );
+  
   const cifRate =
     laborSettings.totalMonthlyHours > 0
       ? totalCIF / laborSettings.totalMonthlyHours
@@ -239,7 +248,7 @@ const OverheadContent = () => {
           </div>
           <div className="h-12 w-px bg-border hidden sm:block mx-4"></div>
           <div className="flex flex-col items-end">
-            <p className="text-muted-foreground">Tasa CIF de Producción:</p>
+            <p className="text-muted-foreground">Tasa CIF (por hora de M.O.):</p>
             <p className="text-xl font-bold">{formatCurrency(cifRate)} / hora</p>
           </div>
         </CardFooter>
@@ -301,6 +310,31 @@ const OverheadContent = () => {
                   </FormItem>
                 )}
               />
+              <FormField
+                control={form.control}
+                name="allocationBasis"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Base de Asignación</FormLabel>
+                    <Select
+                      onValueChange={field.onChange}
+                      defaultValue={field.value}
+                    >
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Selecciona una base" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="labor">Horas de Mano de Obra</SelectItem>
+                        <SelectItem value="material">Costo de Materia Prima</SelectItem>
+                        <SelectItem value="units">Unidades Producidas</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
               <SheetFooter className="pt-6">
                 <SheetClose asChild>
                   <Button variant="outline">Cancelar</Button>
@@ -339,5 +373,3 @@ const OverheadContent = () => {
 export default function OverheadPage() {
     return <OverheadContent />;
 }
-
-    

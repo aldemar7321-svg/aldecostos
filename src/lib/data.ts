@@ -1,7 +1,7 @@
 import type { PriceList, Product, LaborSettings, OverheadItem, TransportItem, CapitalItem } from './types';
 
 export const inventoryData: PriceList[] = [
-  { id: '1', product: 'Harina', measure: 'kg', value: 50, unitValue: 1.0 },
+  { id: 'inv-1', product: 'Harina de Trigo', measure: 'kg', value: 2500, unitValue: 2.5 },
 ];
 
 export const packagingData: PriceList[] = [
@@ -11,35 +11,36 @@ export const packagingData: PriceList[] = [
 export const productsData: Product[] = [
   {
     id: 'prod-1',
-    name: 'Producto de Ejemplo',
-    batchSize: 10,
+    name: 'Pan de Ejemplo',
+    batchSize: 100,
     batchUnit: 'unid.',
     recipe: [
-      { inventoryId: '1', quantity: 5 },
+      { inventoryId: 'inv-1', quantity: 10 },
     ],
     packaging: [
-      { packagingId: 'pkg-1', quantity: 10 },
+      { packagingId: 'pkg-1', quantity: 100 },
     ],
     laborProcesses: [
-      { id: 'lp-1', name: 'Proceso de Ejemplo', time: 30, timeUnit: 'minutos', operators: 1 },
+      { id: 'lp-1', name: 'Amasado', time: 60, timeUnit: 'minutos', operators: 1 },
+      { id: 'lp-2', name: 'Horneado', time: 30, timeUnit: 'minutos', operators: 1 },
     ],
   },
 ];
 
 export const laborSettingsData: LaborSettings = {
-  monthlyCost: 3000,
-  totalMonthlyHours: 160,
+  monthlyCost: 2000000,
+  totalMonthlyHours: 192,
   workHoursPerDay: 8,
 };
 
 export const overheadData: OverheadItem[] = [
-  { id: 'cif-1', concept: 'Arriendo', monthlyValue: 800, productionPercentage: 0.7 },
+  { id: 'cif-1', concept: 'Arriendo', monthlyValue: 1000000, productionPercentage: 0.7, allocationBasis: 'labor' },
 ];
 
 export const transportData: TransportItem[] = [
-  { id: 'trans-1', concept: 'Envío Local', monthlyValue: 400, productionPercentage: 1 },
+  { id: 'trans-1', concept: 'Envío Local', monthlyValue: 300000, productionPercentage: 1, allocationBasis: 'labor' },
 ];
 
 export const capitalData: CapitalItem[] = [
-  { id: 'cap-1', concept: 'Depreciación Horno', monthlyValue: 200, productionPercentage: 1 },
+  { id: 'cap-1', concept: 'Depreciación Horno', monthlyValue: 150000, productionPercentage: 1, allocationBasis: 'labor' },
 ];
