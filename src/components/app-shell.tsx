@@ -8,6 +8,7 @@ import {
   Boxes,
   Factory,
   FileText,
+  Landmark,
   LayoutDashboard,
   Package,
   Truck,
@@ -35,6 +36,7 @@ const navItems = [
   { href: "/labor", icon: Users, label: "Mano de Obra" },
   { href: "/overhead", icon: Factory, label: "Costos Indirectos" },
   { href: "/transport", icon: Truck, label: "Transporte" },
+  { href: "/capital-investment", icon: Landmark, label: "Inversión" },
   { href: "/reports", icon: FileText, label: "Reportes" },
 ];
 
@@ -56,7 +58,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
           <SidebarMenu>
             {navItems.map((item) => (
               <SidebarMenuItem key={item.href}>
-                <Link href={item.href} legacyBehavior={false}>
+                <Link href={item.href}>
                   <SidebarMenuButton
                     as="a"
                     href={item.href}

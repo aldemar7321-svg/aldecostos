@@ -9,8 +9,9 @@ import {
   laborSettingsData as initialLaborSettingsData,
   overheadData as initialOverheadData,
   transportData as initialTransportData,
+  capitalData as initialCapitalData,
 } from '@/lib/data';
-import type { Product, PriceList, LaborSettings, OverheadItem, TransportItem } from '@/lib/types';
+import type { Product, PriceList, LaborSettings, OverheadItem, TransportItem, CapitalItem } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
 
 interface AppDataContextType {
@@ -20,6 +21,7 @@ interface AppDataContextType {
   laborSettings: LaborSettings;
   overhead: OverheadItem[];
   transport: TransportItem[];
+  capital: CapitalItem[];
   addProduct: (product: Product) => void;
   updateProduct: (updatedProduct: Product) => void;
   addInventoryItem: (item: PriceList) => void;
@@ -34,6 +36,9 @@ interface AppDataContextType {
   addTransportItem: (item: TransportItem) => void;
   updateTransportItem: (updatedItem: TransportItem) => void;
   deleteTransportItem: (itemId: string) => void;
+  addCapitalItem: (item: CapitalItem) => void;
+  updateCapitalItem: (updatedItem: CapitalItem) => void;
+  deleteCapitalItem: (itemId: string) => void;
   setLaborSettings: (settings: LaborSettings) => void;
 }
 
@@ -71,6 +76,7 @@ export default function AppLayout({
   const [laborSettings, setLaborSettings] = useState<LaborSettings>(initialLaborSettingsData);
   const [overhead, setOverhead] = useState<OverheadItem[]>([]);
   const [transport, setTransport] = useState<TransportItem[]>([]);
+  const [capital, setCapital] = useState<CapitalItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -80,6 +86,7 @@ export default function AppLayout({
     setLaborSettings(getStoredData('laborSettings', initialLaborSettingsData));
     setOverhead(getStoredData('overhead', initialOverheadData));
     setTransport(getStoredData('transport', initialTransportData));
+    setCapital(getStoredData('capital', initialCapitalData));
     setIsLoading(false);
   }, []);
 
@@ -119,6 +126,11 @@ export default function AppLayout({
     }
   }, [transport, isLoading]);
 
+  useEffect(() => {
+    if(!isLoading) {
+      localStorage.setItem('capital', JSON.stringify(capital));
+    }
+  }, [capital, isLoading]);
 
   const addProduct = (product: Product) => {
     setProducts((prev) => [...prev, product]);
@@ -176,6 +188,18 @@ export default function AppLayout({
     setTransport((prev) => prev.filter((i) => i.id !== itemId));
   };
 
+  const addCapitalItem = (item: CapitalItem) => {
+    setCapital((prev) => [...prev, item]);
+  };
+
+  const updateCapitalItem = (updatedItem: CapitalItem) => {
+    setCapital((prev) => prev.map((i) => (i.id === updatedItem.id ? updatedItem : i)));
+  };
+
+  const deleteCapitalItem = (itemId: string) => {
+    setCapital((prev) => prev.filter((i) => i.id !== itemId));
+  };
+
   const handleSetLaborSettings = (settings: LaborSettings) => {
     setLaborSettings(settings);
   };
@@ -187,6 +211,7 @@ export default function AppLayout({
     laborSettings,
     overhead,
     transport,
+    capital,
     addProduct,
     updateProduct,
     addInventoryItem,
@@ -201,6 +226,9 @@ export default function AppLayout({
     addTransportItem,
     updateTransportItem,
     deleteTransportItem,
+    addCapitalItem,
+    updateCapitalItem,
+    deleteCapitalItem,
     setLaborSettings: handleSetLaborSettings,
   };
 

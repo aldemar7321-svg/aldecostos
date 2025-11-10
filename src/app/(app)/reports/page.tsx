@@ -50,7 +50,7 @@ const formatPercentage = (value: number) =>
   }).format(value);
 
 const ReportsContent = () => {
-  const { products, inventory, packaging, laborSettings, overhead, transport } = useAppData();
+  const { products, inventory, packaging, laborSettings, overhead, transport, capital } = useAppData();
   const [selectedProductId, setSelectedProductId] = useState<string>(
     products[0]?.id || ''
   );
@@ -83,6 +83,15 @@ const ReportsContent = () => {
       ? totalTransport / laborSettings.totalMonthlyHours
       : 0;
 
+  const totalCapital = capital.reduce(
+    (acc, item) => acc + item.monthlyValue * item.productionPercentage,
+    0
+  );
+  const capitalRate =
+    laborSettings.totalMonthlyHours > 0
+      ? totalCapital / laborSettings.totalMonthlyHours
+      : 0;
+
 
   const calculateCosts = (product: Product | undefined) => {
     if (!product) {
@@ -92,6 +101,7 @@ const ReportsContent = () => {
         laborCost: 0,
         overheadCost: 0,
         transportCost: 0,
+        capitalCost: 0,
         totalCost: 0,
         unitCost: 0,
         salePrice: 0,
@@ -118,8 +128,9 @@ const ReportsContent = () => {
 
     const overheadCost = totalLaborHours * cifRate;
     const transportCost = totalLaborHours * transportRate;
+    const capitalCost = totalLaborHours * capitalRate;
 
-    const totalCost = rawMaterialCost + packagingCost + laborCost + overheadCost + transportCost;
+    const totalCost = rawMaterialCost + packagingCost + laborCost + overheadCost + transportCost + capitalCost;
     const unitCost = product.batchSize > 0 ? totalCost / product.batchSize : 0;
 
     const salePrice = profitPercentage < 1 ? unitCost / (1 - profitPercentage) : unitCost;
@@ -131,6 +142,7 @@ const ReportsContent = () => {
       laborCost,
       overheadCost,
       transportCost,
+      capitalCost,
       totalCost,
       unitCost,
       salePrice,
@@ -144,6 +156,7 @@ const ReportsContent = () => {
     laborCost,
     overheadCost,
     transportCost,
+    capitalCost,
     totalCost,
     unitCost,
     salePrice,
@@ -159,6 +172,7 @@ const ReportsContent = () => {
       ['Mano de Obra', laborCost],
       ['Costos Indirectos de Fabricación (CIF)', overheadCost],
       ['Transporte', transportCost],
+      ['Inversión de Capital', capitalCost],
       ['Costo Total del Lote (CTP)', totalCost],
       [`Costo Unitario de Producción (por ${selectedProduct.batchUnit})`, unitCost],
       ['Porcentaje de Rentabilidad', formatPercentage(profitPercentage)],
@@ -211,6 +225,7 @@ const ReportsContent = () => {
         ['Mano de Obra', formatCurrency(laborCost)],
         ['Costos Indirectos de Fabricación (CIF)', formatCurrency(overheadCost)],
         ['Transporte', formatCurrency(transportCost)],
+        ['Inversión de Capital', formatCurrency(capitalCost)],
       ],
       foot: [
         [
@@ -354,6 +369,14 @@ const ReportsContent = () => {
                     </TableCell>
                     <TableCell className="text-right">
                       {formatCurrency(transportCost)}
+                    </TableCell>
+                  </TableRow>
+                  <TableRow>
+                    <TableCell className="font-medium">
+                      Inversión de Capital
+                    </TableCell>
+                    <TableCell className="text-right">
+                      {formatCurrency(capitalCost)}
                     </TableCell>
                   </TableRow>
                   <TableRow className="bg-muted/50">

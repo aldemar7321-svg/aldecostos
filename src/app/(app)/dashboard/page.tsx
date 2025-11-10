@@ -7,7 +7,6 @@ import { PageHeader } from "@/components/page-header";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { ArrowUpRight } from "lucide-react";
-import type { Product, PriceList, LaborSettings, OverheadItem } from '@/lib/types';
 import { useAppData } from "@/app/(app)/layout";
 
 
@@ -16,14 +15,15 @@ const formatCurrency = (value: number) =>
   new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 }).format(value);
 
 const DashboardContent = () => {
-    const { inventory, packaging, products, laborSettings, overhead, transport } = useAppData();
+    const { inventory, packaging, products, laborSettings, overhead, transport, capital } = useAppData();
     
     const totalInventoryValue = inventory.reduce((sum, item) => sum + (item.value), 0);
     const totalPackagingValue = packaging.reduce((sum, item) => sum + (item.value), 0);
     const totalMonthlyLabor = laborSettings.monthlyCost;
     const totalMonthlyCIF = overhead.reduce((sum, item) => sum + (item.monthlyValue * item.productionPercentage), 0);
     const totalMonthlyTransport = transport.reduce((sum, item) => sum + (item.monthlyValue * item.productionPercentage), 0);
-    
+    const totalMonthlyCapital = capital.reduce((sum, item) => sum + (item.monthlyValue * item.productionPercentage), 0);
+
     const firstProduct = products[0];
     const inventoryMap = new Map(inventory.map(item => [item.id, item]));
     const packagingMap = new Map(packaging.map(item => [item.id, item]));
@@ -54,12 +54,16 @@ const DashboardContent = () => {
     const transportRate = laborSettings.totalMonthlyHours > 0 ? totalMonthlyTransport / laborSettings.totalMonthlyHours : 0;
     const transportCost = transportRate * totalLaborHours;
 
+    const capitalRate = laborSettings.totalMonthlyHours > 0 ? totalMonthlyCapital / laborSettings.totalMonthlyHours : 0;
+    const capitalCost = capitalRate * totalLaborHours;
+
     const chartData = [
         { name: "Materia Prima", cost: materialCost, fill: "var(--color-material)" },
         { name: "Empaque", cost: packagingCost, fill: "var(--color-packaging)" },
         { name: "Mano de Obra", cost: laborCost, fill: "var(--color-labor)" },
         { name: "CIF", cost: overheadCost, fill: "var(--color-overhead)" },
         { name: "Transporte", cost: transportCost, fill: "var(--color-transport)" },
+        { name: "Inversión", cost: capitalCost, fill: "var(--color-capital)" },
     ];
 
     const chartConfig = {
@@ -86,12 +90,16 @@ const DashboardContent = () => {
             label: "Transporte",
             color: "hsl(var(--chart-4))",
         },
+        capital: {
+            label: "Inversión",
+            color: "hsl(var(--chart-1))",
+        },
     };
 
     return (
         <div className="flex flex-col gap-6">
             <PageHeader title="Dashboard" description="Bienvenido a ProdCost Pro. Aquí tienes un resumen de tu operación." />
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
                 <Card>
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                         <CardTitle className="text-sm font-medium">Valor Total Materia Prima</CardTitle>
@@ -115,7 +123,7 @@ const DashboardContent = () => {
                 <Card>
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                         <CardTitle className="text-sm font-medium">Mano de Obra Mensual</CardTitle>
-                        <svg xmlns="http://wwws.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4 text-muted-foreground"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/></svg>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4 text-muted-foreground"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/></svg>
                     </CardHeader>
                     <CardContent>
                         <div className="text-2xl font-bold">{formatCurrency(totalMonthlyLabor)}</div>
@@ -140,6 +148,16 @@ const DashboardContent = () => {
                     <CardContent>
                         <div className="text-2xl font-bold">{formatCurrency(totalMonthlyTransport)}</div>
                         <p className="text-xs text-muted-foreground">Costos de transporte asignados</p>
+                    </CardContent>
+                </Card>
+                <Card>
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                        <CardTitle className="text-sm font-medium">Inversión Mensual</CardTitle>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4 text-muted-foreground"><path d="M2 20v-6h2v6"/><path d="M6 20v-8h2v8"/><path d="M10 20v-10h2v10"/><path d="M14 20v-4h2v4"/><path d="M18 20v-2h2v2"/><path d="M22 4v2h-3"/><path d="M11.25 7.96 11 9h-1l-.25-1.04"/><path d="m5 10 3-3 3 3"/><path d="M18.02 12.53c.3-.2.5-.53.5-.93a1.5 1.5 0 0 0-1.5-1.5c-.2 0-.4.06-.58.17"/><path d="M19.5 10.5c.95 0 1.76.66 1.93 1.55"/><path d="M22 10h-1.05"/><path d="M15 10h-2.5"/></svg>
+                    </CardHeader>
+                    <CardContent>
+                        <div className="text-2xl font-bold">{formatCurrency(totalMonthlyCapital)}</div>
+                        <p className="text-xs text-muted-foreground">Depreciación de activos asignada</p>
                     </CardContent>
                 </Card>
             </div>

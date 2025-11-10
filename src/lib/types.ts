@@ -53,3 +53,10 @@ export interface TransportItem {
   monthlyValue: number;
   productionPercentage: number;
 }
+
+export interface CapitalItem {
+  id: string;
+  concept: string;
+  monthlyValue: number;
+  productionPercentage: number;
+}
