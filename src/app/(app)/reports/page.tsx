@@ -55,6 +55,7 @@ const ReportsContent = () => {
     products[0]?.id || ''
   );
   const [profitPercentage, setProfitPercentage] = useState(0.3); // Default 30%
+  const [controlNumber, setControlNumber] = useState('');
   const selectedProduct = products.find((p) => p.id === selectedProductId);
 
   const inventoryMap = new Map(inventory.map((item) => [item.id, item]));
@@ -190,10 +191,8 @@ const ReportsContent = () => {
     const link = document.createElement('a');
     const url = URL.createObjectURL(blob);
     link.href = url;
-    link.setAttribute(
-      'download',
-      `reporte_${selectedProduct?.name.replace(/ /g, '_')}.csv`
-    );
+    const fileName = `reporte_${selectedProduct.name.replace(/ /g, '_')}${controlNumber ? `_control_${controlNumber}` : ''}.csv`;
+    link.setAttribute('download', fileName);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -215,10 +214,13 @@ const ReportsContent = () => {
     doc.text(`Producto: ${selectedProduct.name}`, 14, 45);
     doc.setFontSize(10);
     doc.text(`Tamaño del Lote: ${selectedProduct.batchSize} ${selectedProduct.batchUnit}`, 14, 52);
+    if (controlNumber) {
+        doc.text(`Número de Control: ${controlNumber}`, 14, 59);
+    }
 
     // Cost Table
     autoTable(doc, {
-      startY: 60,
+      startY: 65,
       head: [['Componente de Costo', 'Costo del Lote']],
       body: [
         ['Materia Prima', formatCurrency(rawMaterialCost)],
@@ -267,8 +269,9 @@ const ReportsContent = () => {
       theme: 'striped',
       headStyles: { fillColor: [22, 163, 74] },
     });
-
-    doc.save(`reporte_${selectedProduct.name.replace(/ /g, '_')}.pdf`);
+    
+    const fileName = `reporte_${selectedProduct.name.replace(/ /g, '_')}${controlNumber ? `_control_${controlNumber}` : ''}.pdf`;
+    doc.save(fileName);
   };
 
   return (
@@ -279,18 +282,18 @@ const ReportsContent = () => {
       >
         <Button variant="outline" size="sm" onClick={handleExportCsv}>
           <Download className="mr-2 h-4 w-4" />
-          Exportar CSV
+          Guardar como CSV
         </Button>
         <Button size="sm" onClick={handleExportPdf}>
           <FileText className="mr-2 h-4 w-4" />
-          Generar PDF
+          Guardar como PDF
         </Button>
       </PageHeader>
 
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
         <div className="flex items-center gap-2">
           <Label htmlFor="product-select" className="shrink-0">
-            Seleccionar Producto:
+            Producto:
           </Label>
           <Select
             value={selectedProductId}
@@ -307,6 +310,18 @@ const ReportsContent = () => {
               ))}
             </SelectContent>
           </Select>
+        </div>
+        <div className="flex items-center gap-2">
+            <Label htmlFor="control-number" className="shrink-0">
+                N° de Control:
+            </Label>
+            <Input
+                id="control-number"
+                value={controlNumber}
+                onChange={(e) => setControlNumber(e.target.value)}
+                className="w-full sm:w-[200px]"
+                placeholder="Ej: 001-A"
+            />
         </div>
         <div className='flex md:justify-end'>
             <Button asChild variant="outline" size="sm">
@@ -478,3 +493,5 @@ const ReportsContent = () => {
 export default function ReportsPage() {
     return <ReportsContent />;
 }
+
+    
