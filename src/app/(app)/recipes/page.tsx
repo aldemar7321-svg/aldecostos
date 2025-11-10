@@ -82,7 +82,15 @@ const productFormSchema = z.object({
       quantity: z.coerce.number().positive('La cantidad debe ser positiva.'),
     })
   ),
-  laborProcesses: z.any(),
+  laborProcesses: z.array(
+    z.object({
+      id: z.string(),
+      name: z.string().min(1, 'El nombre del proceso es requerido.'),
+      time: z.coerce.number().positive('El tiempo debe ser positivo.'),
+      timeUnit: z.enum(['minutos', 'horas']),
+      operators: z.coerce.number().int().positive('Debe haber al menos un operario.'),
+    })
+  ),
 });
 
 const RecipesContent = () => {
@@ -151,6 +159,11 @@ const RecipesContent = () => {
     control: form.control,
     name: 'packaging',
   });
+  
+  const { fields: laborFields, append: appendLabor, remove: removeLabor } = useFieldArray({
+    control: form.control,
+    name: 'laborProcesses',
+  });
 
   const handleAddProduct = () => {
     if (!newProductName || newProductBatchSize <= 0 || !newProductBatchUnit) return;
@@ -161,7 +174,7 @@ const RecipesContent = () => {
       batchUnit: newProductBatchUnit,
       recipe: [],
       packaging: [],
-      laborProcesses: [], // Start with empty labor processes
+      laborProcesses: [],
     };
     addProduct(newProduct);
     setNewProductName('');
@@ -177,6 +190,7 @@ const RecipesContent = () => {
       ...product,
       recipe: product.recipe || [],
       packaging: product.packaging || [],
+      laborProcesses: product.laborProcesses || [],
     });
     setIsEditProductSheetOpen(true);
   };
@@ -190,6 +204,7 @@ const RecipesContent = () => {
             batchUnit: values.batchUnit,
             recipe: values.recipe,
             packaging: values.packaging,
+            laborProcesses: values.laborProcesses,
           };
         updateProduct(updatedProductData);
     }
@@ -696,6 +711,98 @@ const RecipesContent = () => {
                     Añadir Empaque
                   </Button>
                 </div>
+                
+                <div className='mt-6'>
+                  <h4 className="font-medium mb-2">
+                    Procesos de Producción (Mano de Obra)
+                  </h4>
+                  <div className="space-y-4">
+                    {laborFields.map((field, index) => (
+                      <div
+                        key={field.id}
+                        className="grid grid-cols-12 items-end gap-2 p-3 border rounded-lg bg-muted/50"
+                      >
+                        <FormField
+                          control={form.control}
+                          name={`laborProcesses.${index}.name`}
+                          render={({ field }) => (
+                            <FormItem className="col-span-12 sm:col-span-5">
+                              <FormLabel>Proceso</FormLabel>
+                              <FormControl>
+                                <Input placeholder="Ej: Mezcla" {...field} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        <FormField
+                          control={form.control}
+                          name={`laborProcesses.${index}.time`}
+                          render={({ field }) => (
+                            <FormItem className="col-span-4 sm:col-span-2">
+                              <FormLabel>Tiempo</FormLabel>
+                              <FormControl>
+                                <Input type="number" {...field} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        <FormField
+                          control={form.control}
+                          name={`laborProcesses.${index}.timeUnit`}
+                          render={({ field }) => (
+                            <FormItem className="col-span-4 sm:col-span-2">
+                              <FormLabel>Unidad</FormLabel>
+                              <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                <FormControl><SelectTrigger><SelectValue/></SelectTrigger></FormControl>
+                                <SelectContent>
+                                  <SelectItem value="minutos">minutos</SelectItem>
+                                  <SelectItem value="horas">horas</SelectItem>
+                                </SelectContent>
+                              </Select>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        <FormField
+                          control={form.control}
+                          name={`laborProcesses.${index}.operators`}
+                          render={({ field }) => (
+                            <FormItem className="col-span-3 sm:col-span-2">
+                              <FormLabel>Operarios</FormLabel>
+                              <FormControl>
+                                <Input type="number" {...field} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        <div className="col-span-1 flex justify-end">
+                            <Button
+                                type="button"
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => removeLabor(index)}
+                            >
+                                <Trash2 className="h-4 w-4 text-destructive" />
+                            </Button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="mt-4"
+                    onClick={() => appendLabor({ id: `lp-${Date.now()}`, name: '', time: 0, timeUnit: 'minutos', operators: 1 })}
+                  >
+                    <PlusCircle className="mr-2 h-4 w-4" />
+                    Añadir Proceso
+                  </Button>
+                </div>
+
               </div>
 
               <SheetFooter className="pt-6 border-t mt-auto">
@@ -715,5 +822,3 @@ const RecipesContent = () => {
 export default function RecipesPage() {
     return <RecipesContent />;
 }
-
-    
