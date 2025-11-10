@@ -462,7 +462,7 @@ const ReportsContent = () => {
                 <p className="text-muted-foreground">
                   Precio de Venta Sugerido (por {selectedProduct.batchUnit}):
                 </p>
-                <p className="text-2xl font-bold text-accent-foreground">
+                <p className="text-2xl font-bold text-foreground">
                   {formatCurrency(salePrice)}
                 </p>
               </div>
