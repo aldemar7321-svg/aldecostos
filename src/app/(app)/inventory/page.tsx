@@ -378,3 +378,5 @@ const InventoryContent = () => {
 export default function InventoryPage() {
     return <InventoryContent />;
 }
+
+    
