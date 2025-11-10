@@ -39,23 +39,23 @@ const DashboardContent = () => {
     }, 0);
 
     const hourRate = laborSettings.totalMonthlyHours > 0 ? laborSettings.monthlyCost / laborSettings.totalMonthlyHours : 0;
-    const laborCost = (firstProduct?.laborProcesses || []).reduce((sum, proc) => {
-        const timeInHours = proc.timeUnit === 'minutos' ? proc.time / 60 : proc.time;
-        return sum + (timeInHours * hourRate * proc.operators);
+    
+    const totalLaborHoursForProduct = (firstProduct?.laborProcesses || []).reduce((acc, process) => {
+      const timeInHours =
+        process.timeUnit === 'minutos' ? process.time / 60 : process.time;
+      return acc + timeInHours * process.operators;
     }, 0);
+
+    const laborCost = totalLaborHoursForProduct * hourRate;
 
     const overheadRate = laborSettings.totalMonthlyHours > 0 ? totalMonthlyCIF / laborSettings.totalMonthlyHours : 0;
-    const totalLaborHours = (firstProduct?.laborProcesses || []).reduce((sum, proc) => {
-        const timeInHours = proc.timeUnit === 'minutos' ? proc.time / 60 : proc.time;
-        return sum + timeInHours;
-    }, 0);
-    const overheadCost = overheadRate * totalLaborHours;
+    const overheadCost = overheadRate * totalLaborHoursForProduct;
 
     const transportRate = laborSettings.totalMonthlyHours > 0 ? totalMonthlyTransport / laborSettings.totalMonthlyHours : 0;
-    const transportCost = transportRate * totalLaborHours;
+    const transportCost = transportRate * totalLaborHoursForProduct;
 
     const capitalRate = laborSettings.totalMonthlyHours > 0 ? totalMonthlyCapital / laborSettings.totalMonthlyHours : 0;
-    const capitalCost = capitalRate * totalLaborHours;
+    const capitalCost = capitalRate * totalLaborHoursForProduct;
 
     const chartData = [
         { name: "Materia Prima", cost: materialCost, fill: "var(--color-material)" },
@@ -197,3 +197,5 @@ const DashboardContent = () => {
 export default function DashboardPage() {
     return <DashboardContent />;
 }
+
+    

@@ -477,3 +477,5 @@ const ReportsContent = () => {
 export default function ReportsPage() {
     return <ReportsContent />;
 }
+
+    
