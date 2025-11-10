@@ -1,28 +1,28 @@
 import type { PriceList, Product, LaborSettings, OverheadItem, TransportItem, CapitalItem } from './types';
 
 export const inventoryData: PriceList[] = [
-  { id: 'inv-1', product: 'Harina de Trigo', measure: 'kg', value: 2500, unitValue: 2.5 },
+  { id: 'inv-1', product: 'Melaza de caña', measure: 'kg', value: 3000, unitValue: 3 },
 ];
 
 export const packagingData: PriceList[] = [
-  { id: 'pkg-1', product: 'Bolsa Plástica', measure: 'unid.', value: 100, unitValue: 0.1 },
+  { id: 'pkg-1', product: 'Botella PET 1L', measure: 'unid.', value: 500, unitValue: 0.5 },
 ];
 
 export const productsData: Product[] = [
   {
     id: 'prod-1',
-    name: 'Pan de Ejemplo',
-    batchSize: 100,
-    batchUnit: 'unid.',
+    name: 'Biofertilizante Líquido',
+    batchSize: 50,
+    batchUnit: 'l',
     recipe: [
-      { inventoryId: 'inv-1', quantity: 10 },
+      { inventoryId: 'inv-1', quantity: 15 },
     ],
     packaging: [
-      { packagingId: 'pkg-1', quantity: 100 },
+      { packagingId: 'pkg-1', quantity: 50 },
     ],
     laborProcesses: [
-      { id: 'lp-1', name: 'Amasado', time: 60, timeUnit: 'minutos', operators: 1 },
-      { id: 'lp-2', name: 'Horneado', time: 30, timeUnit: 'minutos', operators: 1 },
+      { id: 'lp-1', name: 'Mezcla y Fermentación', time: 120, timeUnit: 'minutos', operators: 1 },
+      { id: 'lp-2', name: 'Envasado', time: 60, timeUnit: 'minutos', operators: 2 },
     ],
   },
 ];
@@ -34,13 +34,13 @@ export const laborSettingsData: LaborSettings = {
 };
 
 export const overheadData: OverheadItem[] = [
-  { id: 'cif-1', concept: 'Arriendo', monthlyValue: 1000000, productionPercentage: 0.7, allocationBasis: 'labor' },
+  { id: 'cif-1', concept: 'Arriendo de Bodega', monthlyValue: 1000000, productionPercentage: 0.7, allocationBasis: 'labor' },
 ];
 
 export const transportData: TransportItem[] = [
-  { id: 'trans-1', concept: 'Envío Local', monthlyValue: 300000, productionPercentage: 1, allocationBasis: 'labor' },
+  { id: 'trans-1', concept: 'Distribución Local', monthlyValue: 300000, productionPercentage: 1, allocationBasis: 'labor' },
 ];
 
 export const capitalData: CapitalItem[] = [
-  { id: 'cap-1', concept: 'Depreciación Horno', monthlyValue: 150000, productionPercentage: 1, allocationBasis: 'labor' },
+  { id: 'cap-1', concept: 'Depreciación Fermentador', monthlyValue: 150000, productionPercentage: 1, allocationBasis: 'labor' },
 ];
