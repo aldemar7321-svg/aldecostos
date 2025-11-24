@@ -268,7 +268,7 @@ const RecipesContent = () => {
                           <TableRow>
                             <TableHead>Ingrediente</TableHead>
                             <TableHead className="text-right">
-                              Fórmula (Cantidad)
+                              Cantidad
                             </TableHead>
                             <TableHead className="text-right">
                               Valor Unitario
