@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -66,6 +66,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { Label } from '@/components/ui/label';
 
 
 const formatCurrency = (value: number) =>
@@ -77,11 +78,10 @@ const formatCurrency = (value: number) =>
 
 const formSchema = z.object({
   product: z.string().min(1, 'El nombre del material es requerido.'),
+  purchaseQuantity: z.coerce.number().positive('La cantidad debe ser un número positivo.'),
   measure: z.string().min(1, 'La unidad de medida es requerida.'),
   value: z.coerce.number().positive('El valor debe ser un número positivo.'),
-  unitValue: z.coerce
-    .number()
-    .positive('El valor unitario debe ser un número positivo.'),
+  unitValue: z.coerce.number(),
 });
 
 const PackagingContent = () => {
@@ -95,21 +95,36 @@ const PackagingContent = () => {
     resolver: zodResolver(formSchema),
     defaultValues: {
       product: '',
-      measure: '',
+      purchaseQuantity: 1,
+      measure: 'unid.',
       value: 0,
       unitValue: 0,
     },
   });
 
+  const purchaseValue = form.watch('value');
+  const purchaseQuantity = form.watch('purchaseQuantity');
+
+  useEffect(() => {
+    if (purchaseQuantity > 0) {
+      form.setValue('unitValue', purchaseValue / purchaseQuantity);
+    } else {
+      form.setValue('unitValue', 0);
+    }
+  }, [purchaseValue, purchaseQuantity, form]);
+
   const handleAddNew = () => {
     setEditingItem(null);
-    form.reset({ product: '', measure: '', value: 0, unitValue: 0 });
+    form.reset({ product: '', purchaseQuantity: 1, measure: 'unid.', value: 0, unitValue: 0 });
     setIsSheetOpen(true);
   };
 
   const handleEdit = (item: PriceList) => {
     setEditingItem(item);
-    form.reset(item);
+    form.reset({
+      ...item,
+      purchaseQuantity: item.purchaseQuantity || 1,
+    });
     setIsSheetOpen(true);
   };
 
@@ -144,6 +159,7 @@ const PackagingContent = () => {
   const handleExport = () => {
     const headers = [
       'Material',
+      'Cantidad Compra',
       'Medida de Compra',
       'Valor de Compra',
       'Valor Unitario',
@@ -151,7 +167,7 @@ const PackagingContent = () => {
     const csvContent = [
       headers.join(','),
       ...packaging.map((item) =>
-        [item.product, item.measure, item.value, item.unitValue].join(',')
+        [item.product, item.purchaseQuantity, item.measure, item.value, item.unitValue].join(',')
       ),
     ].join('\n');
 
@@ -210,7 +226,7 @@ const PackagingContent = () => {
               {packaging?.map((item) => (
                 <TableRow key={item.id}>
                   <TableCell className="font-medium">{item.product}</TableCell>
-                  <TableCell className="text-center">{item.measure}</TableCell>
+                  <TableCell className="text-center">{item.purchaseQuantity ? `${item.purchaseQuantity} ${item.measure}` : item.measure}</TableCell>
                   <TableCell className="text-right">
                     {formatCurrency(item.value)}
                   </TableCell>
@@ -286,33 +302,49 @@ const PackagingContent = () => {
                   </FormItem>
                 )}
               />
-              <FormField
-                control={form.control}
-                name="measure"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Medida de Compra</FormLabel>
-                    <Select
-                      onValueChange={field.onChange}
-                      defaultValue={field.value}
-                    >
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Selecciona una unidad" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {units.map((unit) => (
-                          <SelectItem key={unit} value={unit}>
-                            {unit}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+              <div className="grid grid-cols-2 gap-4">
+                <FormField
+                    control={form.control}
+                    name="purchaseQuantity"
+                    render={({ field }) => (
+                        <FormItem>
+                        <FormLabel>Cantidad de Compra</FormLabel>
+                        <FormControl>
+                            <Input type="number" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                        </FormItem>
+                    )}
+                />
+                <FormField
+                  control={form.control}
+                  name="measure"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Unidad de Medida</FormLabel>
+                      <Select
+                        onValueChange={field.onChange}
+                        defaultValue={field.value}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Selecciona una unidad" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {units.map((unit) => (
+                            <SelectItem key={unit} value={unit}>
+                              {unit}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+
               <FormField
                 control={form.control}
                 name="value"
@@ -331,9 +363,9 @@ const PackagingContent = () => {
                 name="unitValue"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Valor Unitario</FormLabel>
+                    <Label>Valor Unitario (Calculado)</Label>
                     <FormControl>
-                      <Input type="number" {...field} />
+                      <Input type="number" {...field} readOnly className="bg-muted/50 font-semibold" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -379,5 +411,3 @@ const PackagingContent = () => {
 export default function PackagingPage() {
     return <PackagingContent />;
 }
-
-    
