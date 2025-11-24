@@ -1,11 +1,11 @@
 import type { PriceList, Product, LaborSettings, OverheadItem, TransportItem, CapitalItem } from './types';
 
 export const inventoryData: PriceList[] = [
-  { id: 'inv-1', product: 'Melaza de caña', measure: 'kg', value: 3000, unitValue: 3 },
+  { id: 'inv-1', product: 'Melaza de caña', purchaseQuantity: 1, measure: 'kg', value: 3000, unitValue: 3000 },
 ];
 
 export const packagingData: PriceList[] = [
-  { id: 'pkg-1', product: 'Botella PET 1L', measure: 'unid.', value: 500, unitValue: 500 },
+  { id: 'pkg-1', product: 'Botella PET 1L', purchaseQuantity: 1, measure: 'unid.', value: 500, unitValue: 500 },
 ];
 
 export const productsData: Product[] = [

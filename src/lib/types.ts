@@ -2,6 +2,7 @@ export interface PriceList {
   id: string;
   product: string; 
   measure: string;
+  purchaseQuantity?: number;
   value: number;
   unitValue: number; 
 }
