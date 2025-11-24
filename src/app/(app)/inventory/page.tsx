@@ -103,6 +103,7 @@ const InventoryContent = () => {
 
   const purchaseValue = form.watch('value');
   const purchaseQuantity = form.watch('purchaseQuantity');
+  const unitValue = form.watch('unitValue');
 
   useEffect(() => {
     if (purchaseQuantity > 0) {
@@ -356,19 +357,12 @@ const InventoryContent = () => {
                   </FormItem>
                 )}
               />
-              <FormField
-                control={form.control}
-                name="unitValue"
-                render={({ field }) => (
-                  <FormItem>
-                    <Label>Valor Unitario (Calculado)</Label>
-                    <FormControl>
-                      <Input type="number" {...field} readOnly className="bg-muted/50 font-semibold" />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+              <div className="space-y-2">
+                <Label>Valor Unitario (Calculado)</Label>
+                <p className="flex h-10 w-full items-center rounded-md border border-input bg-muted/50 px-3 py-2 text-sm font-semibold">
+                  {formatCurrency(unitValue)}
+                </p>
+              </div>
               <SheetFooter className="pt-6">
                 <SheetClose asChild>
                   <Button variant="outline">Cancelar</Button>
