@@ -14,6 +14,7 @@ import {
   Truck,
   Users,
   FlaskConical,
+  Warehouse,
 } from "lucide-react";
 import {
   SidebarProvider,
@@ -37,6 +38,7 @@ const navItems = [
   { href: "/overhead", icon: Factory, label: "Costos Indirectos" },
   { href: "/transport", icon: Truck, label: "Transporte" },
   { href: "/capital-investment", icon: Landmark, label: "Inversión" },
+  { href: "/finished-products", icon: Warehouse, label: "Productos Terminados" },
   { href: "/reports", icon: FileText, label: "Reportes" },
 ];
 

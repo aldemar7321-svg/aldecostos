@@ -1,4 +1,4 @@
-import type { PriceList, Product, LaborSettings, OverheadItem, TransportItem, CapitalItem } from './types';
+import type { PriceList, Product, LaborSettings, OverheadItem, TransportItem, CapitalItem, FinishedProduct } from './types';
 
 export const ingredientsData: PriceList[] = [
     { id: 'ing-1', product: 'Melaza de caña', purchaseQuantity: 1, measure: 'kg', value: 3000, unitValue: 3 },
@@ -29,6 +29,17 @@ export const productsData: Product[] = [
       { id: 'lp-2', name: 'Envasado', time: 60, timeUnit: 'minutos', operators: 2 },
     ],
   },
+];
+
+export const finishedProductsData: FinishedProduct[] = [
+  {
+    id: 'fp-1',
+    productId: 'prod-1',
+    productionDate: new Date().toISOString(),
+    quantity: 100,
+    unitCost: 1850.50,
+    lotNumber: 'LOTE-001',
+  }
 ];
 
 export const laborSettingsData: LaborSettings = {

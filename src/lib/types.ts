@@ -35,6 +35,15 @@ export interface Product {
   laborProcesses: LaborProcess[];
 }
 
+export interface FinishedProduct {
+  id: string;
+  productId: string;
+  productionDate: string; 
+  quantity: number;
+  unitCost: number;
+  lotNumber?: string;
+}
+
 export interface LaborSettings {
   monthlyCost: number;
   totalMonthlyHours: number;
