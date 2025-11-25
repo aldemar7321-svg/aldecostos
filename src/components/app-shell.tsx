@@ -59,7 +59,9 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   const auth = useAuth();
 
   const handleSignOut = async () => {
-    await signOut(auth);
+    if (auth) {
+      await signOut(auth);
+    }
   };
 
   return (

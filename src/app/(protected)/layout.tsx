@@ -1,3 +1,4 @@
+
 'use client';
 
 import { createContext, useContext, useState, useEffect } from 'react';
@@ -83,7 +84,7 @@ const getStoredData = <T,>(key: string, fallback: T): T => {
     }
 }
 
-export default function ProtectedAppLayout({
+export default function ProtectedLayout({
   children,
 }: {
   children: React.ReactNode;
