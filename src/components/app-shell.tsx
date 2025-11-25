@@ -33,9 +33,13 @@ import {
   SidebarSeparator,
 } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
+import { signOut } from "firebase/auth";
+import { useAuth } from "@/firebase";
+import { useRouter } from "next/navigation";
+
 
 const navItems = [
-  { href: "/", icon: LayoutDashboard, label: "Dashboard" },
+  { href: "/dashboard", icon: LayoutDashboard, label: "Dashboard" },
   { href: "/inventory", icon: FlaskConical, label: "Materia Prima" },
   { href: "/packaging", icon: Package, label: "Empaques" },
   { href: "/recipes", icon: BookHeart, label: "Recetas" },
@@ -53,6 +57,16 @@ const secondaryNavItems = [
 
 export default function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const auth = useAuth();
+  const router = useRouter();
+
+  const handleSignOut = async () => {
+    if (auth) {
+      await signOut(auth);
+      router.push('/');
+    }
+  };
+
 
   return (
     <SidebarProvider>
@@ -104,7 +118,12 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
         <SidebarFooter>
             <SidebarSeparator />
             <div className="p-2 flex flex-col gap-2">
-                
+                <SidebarMenuItem>
+                  <SidebarMenuButton onClick={handleSignOut} tooltip="Cerrar Sesión">
+                    <LogOut />
+                    <span>Cerrar Sesión</span>
+                  </SidebarMenuButton>
+              </SidebarMenuItem>
             </div>
         </SidebarFooter>
       </Sidebar>

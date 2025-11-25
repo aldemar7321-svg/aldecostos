@@ -1,76 +1,64 @@
-
 'use client';
-
-import { PageHeader } from '@/components/page-header';
+import { Button } from '@/components/ui/button';
 import {
   Card,
   CardContent,
+  CardDescription,
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import { useAppData } from '@/app/layout-client';
-import { Package, FlaskConical, BookHeart, Warehouse } from 'lucide-react';
+import { Boxes } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { initiateAnonymousSignIn } from '@/firebase/non-blocking-login';
+import { useUser } from '@/firebase';
+import { useEffect } from 'react';
 
-export default function DashboardPage() {
-  const { products, inventory, packaging, finishedProducts } = useAppData();
+export default function LoginPage() {
+  const router = useRouter();
+  const { data: user, isLoading } = useUser();
+
+  const handleSignIn = async () => {
+    try {
+      await initiateAnonymousSignIn();
+      router.push('/dashboard');
+    } catch (error) {
+      console.error('Error signing in anonymously:', error);
+    }
+  };
+
+  useEffect(() => {
+    if (user) {
+      router.push('/dashboard');
+    }
+  }, [user, router]);
+
+  if (isLoading || user) {
+    return (
+      <div className="flex h-screen items-center justify-center">
+        <p>Cargando...</p>
+      </div>
+    );
+  }
 
   return (
-    <div className="space-y-6">
-      <PageHeader title="Dashboard" description="Un resumen de la información clave de tu operación." />
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
-              Recetas de Productos
-            </CardTitle>
-            <BookHeart className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{products?.length || 0}</div>
-            <p className="text-xs text-muted-foreground">
-              Total de productos definidos
-            </p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Materia Prima</CardTitle>
-            <FlaskConical className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{inventory?.length || 0}</div>
-            <p className="text-xs text-muted-foreground">
-              Insumos en inventario
-            </p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Empaques</CardTitle>
-            <Package className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{packaging?.length || 0}</div>
-            <p className="text-xs text-muted-foreground">
-              Empaques en inventario
-            </p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
-              Productos Terminados
-            </CardTitle>
-            <Warehouse className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{finishedProducts?.length || 0}</div>
-            <p className="text-xs text-muted-foreground">
-              Lotes en stock
-            </p>
-          </CardContent>
-        </Card>
-      </div>
-    </div>
+    <main className="flex min-h-screen flex-col items-center justify-center p-8">
+      <Card className="w-full max-w-sm">
+        <CardHeader className="text-center">
+          <div className="mx-auto mb-4 flex w-fit items-center gap-2 rounded-lg bg-primary px-4 py-2 text-primary-foreground">
+            <Boxes className="h-6 w-6" />
+            <span className="text-xl font-semibold">ProdCost Pro</span>
+          </div>
+          <CardTitle>Bienvenido</CardTitle>
+          <CardDescription>
+            Ingresa a la aplicación para empezar a gestionar tus costos.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Button onClick={handleSignIn} className="w-full">
+            Ingresar
+          </Button>
+        </CardContent>
+      </Card>
+    </main>
   );
 }
