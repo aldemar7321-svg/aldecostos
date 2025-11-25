@@ -34,6 +34,7 @@ export default function DonatePage() {
             <div className="text-center">
               <p className="font-semibold">Aldemar Morales</p>
               <p className="text-sm text-muted-foreground">Nequi: 0090906326</p>
+              <p className="text-sm text-muted-foreground">Cel: 3052562338</p>
             </div>
           </CardContent>
         </Card>
