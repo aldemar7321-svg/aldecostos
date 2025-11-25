@@ -15,6 +15,7 @@ import {
   Users,
   FlaskConical,
   Warehouse,
+  Heart,
 } from "lucide-react";
 import {
   SidebarProvider,
@@ -42,6 +43,10 @@ const navItems = [
   { href: "/reports", icon: FileText, label: "Reportes" },
 ];
 
+const secondaryNavItems = [
+    { href: "/donate", icon: Heart, label: "Donar" },
+]
+
 export default function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
 
@@ -56,7 +61,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
             <span className="text-lg font-semibold">ProdCost Pro</span>
           </div>
         </SidebarHeader>
-        <SidebarContent className="p-2">
+        <SidebarContent className="flex flex-col justify-between p-2">
           <SidebarMenu>
             {navItems.map((item) => (
               <SidebarMenuItem key={item.href}>
@@ -72,6 +77,23 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
                   </SidebarMenuButton>
                 </Link>
               </SidebarMenuItem>
+            ))}
+          </SidebarMenu>
+          <SidebarMenu>
+            {secondaryNavItems.map((item) => (
+                <SidebarMenuItem key={item.href}>
+                    <Link href={item.href}>
+                        <SidebarMenuButton
+                            as="a"
+                            href={item.href}
+                            isActive={pathname === item.href}
+                            tooltip={item.label}
+                        >
+                            <item.icon />
+                            <span>{item.label}</span>
+                        </SidebarMenuButton>
+                    </Link>
+                </SidebarMenuItem>
             ))}
           </SidebarMenu>
         </SidebarContent>
