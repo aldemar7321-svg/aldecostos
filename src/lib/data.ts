@@ -1,7 +1,7 @@
 import type { PriceList, Product, LaborSettings, OverheadItem, TransportItem, CapitalItem } from './types';
 
 export const inventoryData: PriceList[] = [
-  { id: 'inv-1', product: 'Melaza de caña', purchaseQuantity: 1, measure: 'kg', value: 3000, unitValue: 3000 },
+  { id: 'inv-1', product: 'Melaza de caña', purchaseQuantity: 1000, measure: 'g', value: 3000, unitValue: 3 },
 ];
 
 export const packagingData: PriceList[] = [
@@ -15,7 +15,7 @@ export const productsData: Product[] = [
     batchSize: 50,
     batchUnit: 'l',
     recipe: [
-      { inventoryId: 'inv-1', quantity: 15 },
+      { inventoryId: 'inv-1', quantity: 15000 },
     ],
     packaging: [
       { packagingId: 'pkg-1', quantity: 50 },
