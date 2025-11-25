@@ -35,7 +35,6 @@ import { Input } from '@/components/ui/input';
 import { useAppData } from '@/app/(app)/layout';
 import Link from 'next/link';
 
-
 const formatCurrency = (value: number) =>
   new Intl.NumberFormat('es-CO', {
     style: 'currency',
@@ -109,7 +108,6 @@ const ReportsContent = () => {
       }, 0);
 
       const totalUnitsOfAllProducts = products.reduce((sum, p) => sum + p.batchSize, 0) || 1;
-
 
       return items.reduce((acc, item) => {
         const productionCost = item.monthlyValue * item.productionPercentage;
@@ -496,7 +494,6 @@ const ReportsContent = () => {
     </div>
   );
 };
-
 
 export default function ReportsPage() {
     return <ReportsContent />;
