@@ -477,7 +477,7 @@ const ReportsContent = () => {
                   </TableRow>
                 </TableBody>
               </Table>
-            </CardFooter>
+            </CardContent>
             <CardFooter className="justify-end bg-accent/10 rounded-b-lg">
               <div className="flex flex-col items-end">
                 <p className="text-muted-foreground">
