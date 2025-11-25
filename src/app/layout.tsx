@@ -71,18 +71,15 @@ export function useAppData() {
   return context;
 }
 
-const getStoredData = (key: string, fallback: any) => {
-  if (typeof window === 'undefined') return fallback;
+const getStoredData = (key: string) => {
+  if (typeof window === 'undefined') return null;
   const stored = localStorage.getItem(key);
-  if (stored) {
-    try {
-      return JSON.parse(stored);
-    } catch (e) {
-      console.error(`Error parsing JSON from localStorage key "${key}":`, e);
-      return fallback;
-    }
+  try {
+    return stored ? JSON.parse(stored) : null;
+  } catch (e) {
+    console.error(`Error parsing JSON from localStorage key "${key}":`, e);
+    return null;
   }
-  return fallback;
 };
 
 const storeData = (key: string, data: any) => {
@@ -107,26 +104,76 @@ export default function RootLayout({
   const [isDataLoaded, setIsDataLoaded] = useState(false);
 
   useEffect(() => {
-    // Check if data is already in localStorage to prevent overwriting on refresh
-    const initialProducts = getStoredData('products', productsData);
-    const initialInventory = getStoredData('inventory', ingredientsData);
-    const initialPackaging = getStoredData('packaging', packagingData);
-    const initialLaborSettings = getStoredData('laborSettings', laborSettingsData);
-    const initialOverhead = getStoredData('overhead', overheadData);
-    const initialTransport = getStoredData('transport', transportData);
-    const initialCapital = getStoredData('capital', capitalData);
-    const initialFinishedProducts = getStoredData('finishedProducts', finishedProductsData);
+    // This effect runs once on mount to bootstrap the application data.
+    const bootstrapData = () => {
+      const storedProducts = getStoredData('products');
+      if (storedProducts) {
+        setProducts(storedProducts);
+      } else {
+        setProducts(productsData);
+        storeData('products', productsData);
+      }
 
-    setProducts(initialProducts);
-    setInventory(initialInventory);
-    setPackaging(initialPackaging);
-    setLaborSettings(initialLaborSettings);
-    setOverhead(initialOverhead);
-    setTransport(initialTransport);
-    setCapital(initialCapital);
-    setFinishedProducts(initialFinishedProducts);
-    
-    setIsDataLoaded(true);
+      const storedInventory = getStoredData('inventory');
+      if (storedInventory) {
+        setInventory(storedInventory);
+      } else {
+        setInventory(ingredientsData);
+        storeData('inventory', ingredientsData);
+      }
+      
+      const storedPackaging = getStoredData('packaging');
+      if (storedPackaging) {
+        setPackaging(storedPackaging);
+      } else {
+        setPackaging(packagingData);
+        storeData('packaging', packagingData);
+      }
+
+      const storedLaborSettings = getStoredData('laborSettings');
+      if (storedLaborSettings) {
+        setLaborSettings(storedLaborSettings);
+      } else {
+        setLaborSettings(laborSettingsData);
+        storeData('laborSettings', laborSettingsData);
+      }
+
+      const storedOverhead = getStoredData('overhead');
+      if (storedOverhead) {
+        setOverhead(storedOverhead);
+      } else {
+        setOverhead(overheadData);
+        storeData('overhead', overheadData);
+      }
+      
+      const storedTransport = getStoredData('transport');
+      if (storedTransport) {
+        setTransport(storedTransport);
+      } else {
+        setTransport(transportData);
+        storeData('transport', transportData);
+      }
+
+      const storedCapital = getStoredData('capital');
+      if (storedCapital) {
+        setCapital(storedCapital);
+      } else {
+        setCapital(capitalData);
+        storeData('capital', capitalData);
+      }
+      
+      const storedFinishedProducts = getStoredData('finishedProducts');
+      if (storedFinishedProducts) {
+        setFinishedProducts(storedFinishedProducts);
+      } else {
+        setFinishedProducts(finishedProductsData);
+        storeData('finishedProducts', finishedProductsData);
+      }
+
+      setIsDataLoaded(true);
+    };
+
+    bootstrapData();
   }, []);
 
   useEffect(() => { if (isDataLoaded) storeData('products', products) }, [products, isDataLoaded]);
