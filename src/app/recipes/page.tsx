@@ -109,9 +109,9 @@ export default function RecipesPage() {
               </CardHeader>
               <CardContent>
                 <div className="text-sm text-muted-foreground">
-                  <p>{product.ingredients.length} ingredientes</p>
-                  <p>{product.packaging.length} empaques</p>
-                  <p>{product.laborProcesses.length} procesos de mano de obra</p>
+                  <p>{product.ingredients?.length || 0} ingredientes</p>
+                  <p>{product.packaging?.length || 0} empaques</p>
+                  <p>{product.laborProcesses?.length || 0} procesos de mano de obra</p>
                 </div>
               </CardContent>
               <CardFooter>
