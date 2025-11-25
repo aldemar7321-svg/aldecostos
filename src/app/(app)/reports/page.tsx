@@ -50,7 +50,7 @@ const formatPercentage = (value: number) =>
   }).format(value);
 
 const ReportsContent = () => {
-  const { products, inventory, packaging, laborSettings, overhead, transport, capital } = useAppData();
+  const { products, packaging, laborSettings, overhead, transport, capital } = useAppData();
   const [selectedProductId, setSelectedProductId] = useState<string>(
     products[0]?.id || ''
   );
@@ -58,13 +58,11 @@ const ReportsContent = () => {
   const [controlNumber, setControlNumber] = useState('');
   const selectedProduct = products.find((p) => p.id === selectedProductId);
 
-  const inventoryMap = new Map(inventory.map((item) => [item.id, item]));
   const packagingMap = new Map(packaging.map((item) => [item.id, item]));
 
   const calculateCosts = (product: Product | undefined) => {
     if (!product) {
       return {
-        rawMaterialCost: 0,
         packagingCost: 0,
         laborCost: 0,
         overheadCost: 0,
@@ -76,11 +74,6 @@ const ReportsContent = () => {
         profitPerUnit: 0,
       };
     }
-
-    const rawMaterialCost = (product.recipe || []).reduce((acc, ingredient) => {
-      const item = inventoryMap.get(ingredient.inventoryId);
-      return acc + (item ? item.unitValue * ingredient.quantity : 0);
-    }, 0);
     
     const packagingCost = (product.packaging || []).reduce((acc, pkg) => {
       const item = packagingMap.get(pkg.packagingId);
@@ -109,17 +102,9 @@ const ReportsContent = () => {
             itemCost = totalLaborHours * rate;
             break;
           case 'material':
-            // Note: This allocation is based on the % of this product's material cost relative to total material cost,
-            // which is a simplification. A more complex implementation would need total material cost across all products.
-            // For now, we'll apply it as a simple percentage of the current product's material cost for demonstration.
-            // This is a business logic decision. Let's assume a fixed percentage rate for simplicity.
-            // A better approach would be to define the rate in the item itself. Let's assume a 10% rate for demo.
-            itemCost = rawMaterialCost * 0.10; // Placeholder logic
+            itemCost = 0; // No material cost
             break;
           case 'units':
-            // This would require total units produced in a month.
-            // Simplified: let's assume a rate per unit is somehow derived.
-            // For now, let's divide monthly cost by an assumed 1000 units/month and multiply by batch size.
             const unitRate = productionCost / 1000;
             itemCost = product.batchSize * unitRate;
             break;
@@ -132,14 +117,13 @@ const ReportsContent = () => {
     const transportCost = calculateIndirectCost(transport);
     const capitalCost = calculateIndirectCost(capital);
     
-    const totalCost = rawMaterialCost + packagingCost + laborCost + overheadCost + transportCost + capitalCost;
+    const totalCost = packagingCost + laborCost + overheadCost + transportCost + capitalCost;
     const unitCost = product.batchSize > 0 ? totalCost / product.batchSize : 0;
 
     const salePrice = profitPercentage < 1 ? unitCost / (1 - profitPercentage) : unitCost;
     const profitPerUnit = salePrice - unitCost;
 
     return {
-      rawMaterialCost,
       packagingCost,
       laborCost,
       overheadCost,
@@ -153,7 +137,6 @@ const ReportsContent = () => {
   };
 
   const {
-    rawMaterialCost,
     packagingCost,
     laborCost,
     overheadCost,
@@ -169,7 +152,6 @@ const ReportsContent = () => {
     if (!selectedProduct) return;
     const headers = ['Componente de Costo', 'Costo del Lote', 'Costo Unitario'];
     const data = [
-      ['Materia Prima', rawMaterialCost],
       ['Material de Empaque', packagingCost],
       ['Mano de Obra', laborCost],
       ['Costos Indirectos de Fabricación (CIF)', overheadCost],
@@ -223,7 +205,6 @@ const ReportsContent = () => {
       startY: 65,
       head: [['Componente de Costo', 'Costo del Lote']],
       body: [
-        ['Materia Prima', formatCurrency(rawMaterialCost)],
         ['Material de Empaque', formatCurrency(packagingCost)],
         ['Mano de Obra', formatCurrency(laborCost)],
         ['Costos Indirectos de Fabricación (CIF)', formatCurrency(overheadCost)],
@@ -326,7 +307,7 @@ const ReportsContent = () => {
         <div className='flex md:justify-end'>
             <Button asChild variant="outline" size="sm">
                 <Link href={`/recipes?product=${selectedProductId}`}>
-                    <Edit className="mr-2 h-4 w-4" /> Editar Producto y Receta
+                    <Edit className="mr-2 h-4 w-4" /> Editar Producto y Fórmula
                 </Link>
             </Button>
         </div>
@@ -353,12 +334,6 @@ const ReportsContent = () => {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  <TableRow>
-                    <TableCell className="font-medium">Materia Prima</TableCell>
-                    <TableCell className="text-right">
-                      {formatCurrency(rawMaterialCost)}
-                    </TableCell>
-                  </TableRow>
                   <TableRow>
                     <TableCell className="font-medium">Material de Empaque</TableCell>
                     <TableCell className="text-right">
@@ -493,5 +468,3 @@ const ReportsContent = () => {
 export default function ReportsPage() {
     return <ReportsContent />;
 }
-
-    

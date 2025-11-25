@@ -7,11 +7,6 @@ export interface PriceList {
   unitValue: number; 
 }
 
-export interface Ingredient {
-  inventoryId: string;
-  quantity: number;
-}
-
 export interface PackagingItem {
   packagingId: string;
   quantity: number;
@@ -30,7 +25,6 @@ export interface Product {
   name: string;
   batchSize: number;
   batchUnit: string;
-  recipe: Ingredient[];
   packaging: PackagingItem[];
   laborProcesses: LaborProcess[];
 }

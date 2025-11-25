@@ -13,7 +13,6 @@ import {
   Package,
   Truck,
   Users,
-  Warehouse,
 } from "lucide-react";
 import {
   SidebarProvider,
@@ -30,7 +29,6 @@ import { Button } from "@/components/ui/button";
 
 const navItems = [
   { href: "/dashboard", icon: LayoutDashboard, label: "Dashboard" },
-  { href: "/inventory", icon: Warehouse, label: "Materia Prima" },
   { href: "/packaging", icon: Package, label: "Empaques" },
   { href: "/recipes", icon: BookHeart, label: "Recetas" },
   { href: "/labor", icon: Users, label: "Mano de Obra" },

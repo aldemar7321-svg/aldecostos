@@ -22,7 +22,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import type { Ingredient, Product, PackagingItem } from '@/lib/types';
+import type { Product, PackagingItem } from '@/lib/types';
 import { PageHeader } from '@/components/page-header';
 import { Button } from '@/components/ui/button';
 import { PlusCircle, Trash2, Edit } from 'lucide-react';
@@ -70,12 +70,6 @@ const productFormSchema = z.object({
     .number()
     .positive('El tamaño del lote debe ser positivo.'),
   batchUnit: z.string().min(1, 'La unidad del lote es requerida.'),
-  recipe: z.array(
-    z.object({
-      inventoryId: z.string().min(1, 'Debes seleccionar un ingrediente.'),
-      quantity: z.coerce.number().positive('La cantidad debe ser positiva.'),
-    })
-  ),
   packaging: z.array(
     z.object({
       packagingId: z.string().min(1, 'Debes seleccionar un empaque.'),
@@ -94,7 +88,7 @@ const productFormSchema = z.object({
 });
 
 const RecipesContent = () => {
-  const { products, inventory, packaging, addProduct, updateProduct } = useAppData();
+  const { products, packaging, addProduct, updateProduct } = useAppData();
   const [isAddProductSheetOpen, setIsAddProductSheetOpen] = useState(false);
   const [isEditProductSheetOpen, setIsEditProductSheetOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
@@ -124,19 +118,8 @@ const RecipesContent = () => {
   const [newProductBatchSize, setNewProductBatchSize] = useState(0);
   const [newProductBatchUnit, setNewProductBatchUnit] = useState('unid.');
 
-
-  const inventoryMap = new Map(inventory.map((item) => [item.id, item]));
   const packagingMap = new Map(packaging.map((item) => [item.id, item]));
   const batchUnits = ['kg', 'g', 'lb', 'oz', 'unid.', 'l', 'ml', 'cc'];
-
-
-  const calculateRecipeCost = (recipe: Ingredient[]) => {
-    return recipe.reduce((acc, ingredient) => {
-      const item = inventoryMap.get(ingredient.inventoryId);
-      const itemCost = item ? item.unitValue * ingredient.quantity : 0;
-      return acc + itemCost;
-    }, 0);
-  };
   
   const calculatePackagingCost = (packagingItems: PackagingItem[]) => {
     return (packagingItems || []).reduce((acc, packagingItem) => {
@@ -148,11 +131,6 @@ const RecipesContent = () => {
 
   const form = useForm<z.infer<typeof productFormSchema>>({
     resolver: zodResolver(productFormSchema),
-  });
-
-  const { fields: recipeFields, append: appendRecipe, remove: removeRecipe } = useFieldArray({
-    control: form.control,
-    name: 'recipe',
   });
 
   const { fields: packagingFields, append: appendPackaging, remove: removePackaging } = useFieldArray({
@@ -172,7 +150,6 @@ const RecipesContent = () => {
       name: newProductName,
       batchSize: newProductBatchSize,
       batchUnit: newProductBatchUnit,
-      recipe: [],
       packaging: [],
       laborProcesses: [],
     };
@@ -188,7 +165,6 @@ const RecipesContent = () => {
     setEditingProduct(product);
     form.reset({
       ...product,
-      recipe: product.recipe || [],
       packaging: product.packaging || [],
       laborProcesses: product.laborProcesses || [],
     });
@@ -202,7 +178,6 @@ const RecipesContent = () => {
             name: values.name,
             batchSize: values.batchSize,
             batchUnit: values.batchUnit,
-            recipe: values.recipe,
             packaging: values.packaging,
             laborProcesses: values.laborProcesses,
           };
@@ -215,8 +190,8 @@ const RecipesContent = () => {
   return (
     <div className="flex flex-col gap-6">
       <PageHeader
-        title="Fórmulas y Costeo de Materia Prima y Empaques"
-        description="Define las recetas y empaques para cada uno de tus productos."
+        title="Fórmulas y Costeo de Empaques"
+        description="Define los empaques para cada uno de tus productos."
       >
         <Button size="sm" onClick={() => setIsAddProductSheetOpen(true)}>
           <PlusCircle className="mr-2 h-4 w-4" />
@@ -234,9 +209,8 @@ const RecipesContent = () => {
             ))}
           </TabsList>
           {products.map((product) => {
-            const totalRecipeCost = calculateRecipeCost(product.recipe);
             const totalPackagingCost = calculatePackagingCost(product.packaging);
-            const totalDirectCost = totalRecipeCost + totalPackagingCost;
+            const totalDirectCost = totalPackagingCost;
             const unitCost =
               product.batchSize > 0 ? totalDirectCost / product.batchSize : 0;
 
@@ -247,7 +221,7 @@ const RecipesContent = () => {
                     <div>
                       <CardTitle>{product.name}</CardTitle>
                       <CardDescription>
-                        Costeo de materia prima y empaque para un lote de producción de{' '}
+                        Costeo de empaque para un lote de producción de{' '}
                         {product.batchSize} {product.batchUnit}.
                       </CardDescription>
                     </div>
@@ -261,65 +235,6 @@ const RecipesContent = () => {
                     </Button>
                   </CardHeader>
                   <CardContent className="space-y-6">
-                    <div>
-                      <h4 className="font-medium text-lg mb-2">Materia Prima</h4>
-                      <Table>
-                        <TableHeader>
-                          <TableRow>
-                            <TableHead>Ingrediente</TableHead>
-                            <TableHead className="text-right">
-                              Cantidad
-                            </TableHead>
-                            <TableHead className="text-right">
-                              Valor Unitario
-                            </TableHead>
-                            <TableHead className="text-right">
-                              Valor Total
-                            </TableHead>
-                          </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                          {product.recipe.length > 0 ? (
-                            product.recipe.map((ingredient, index) => {
-                              const item = inventoryMap.get(
-                                ingredient.inventoryId
-                              );
-                              const totalValue = item
-                                ? item.unitValue * ingredient.quantity
-                                : 0;
-                              return (
-                                <TableRow
-                                  key={`${ingredient.inventoryId}-${index}`}
-                                >
-                                  <TableCell className="font-medium">
-                                    {item?.product || 'N/A'}
-                                  </TableCell>
-                                  <TableCell className="text-right">
-                                    {ingredient.quantity.toFixed(2)}{' '}
-                                    {item?.measure}
-                                  </TableCell>
-                                  <TableCell className="text-right">
-                                    {formatCurrency(item?.unitValue || 0)}
-                                  </TableCell>
-                                  <TableCell className="text-right">
-                                    {formatCurrency(totalValue)}
-                                  </TableCell>
-                                </TableRow>
-                              );
-                            })
-                          ) : (
-                            <TableRow>
-                              <TableCell
-                                colSpan={4}
-                                className="text-center text-muted-foreground py-8"
-                              >
-                                Esta receta aún no tiene ingredientes. Edita el producto para añadirlos.
-                              </TableCell>
-                            </TableRow>
-                          )}
-                        </TableBody>
-                      </Table>
-                    </div>
                     <div>
                       <h4 className="font-medium text-lg mb-2">Material de Empaque</h4>
                       <Table>
@@ -480,9 +395,9 @@ const RecipesContent = () => {
       >
         <SheetContent className="sm:max-w-3xl">
           <SheetHeader>
-            <SheetTitle>Editar Producto y Receta</SheetTitle>
+            <SheetTitle>Editar Producto y Fórmula</SheetTitle>
             <SheetDescription>
-              Modifica los detalles del producto y gestiona los ingredientes y empaques.
+              Modifica los detalles del producto y gestiona los empaques.
             </SheetDescription>
           </SheetHeader>
           <Form {...form}>
@@ -545,88 +460,6 @@ const RecipesContent = () => {
                             </FormItem>
                         )}
                     />
-                </div>
-                <div>
-                  <h4 className="font-medium mb-2">
-                    Ingredientes de la Receta
-                  </h4>
-                  <div className="space-y-4">
-                    {recipeFields.map((field, index) => {
-                      const selectedInventoryItem = inventory.find(
-                        (i) => i.id === form.watch(`recipe.${index}.inventoryId`)
-                      );
-                      return (
-                        <div
-                          key={field.id}
-                          className="flex items-end gap-2 p-3 border rounded-lg bg-muted/50"
-                        >
-                          <FormField
-                            control={form.control}
-                            name={`recipe.${index}.inventoryId`}
-                            render={({ field }) => (
-                              <FormItem className="flex-1">
-                                <FormLabel>Ingrediente</FormLabel>
-                                <Select
-                                  onValueChange={field.onChange}
-                                  defaultValue={field.value}
-                                >
-                                  <FormControl>
-                                    <SelectTrigger>
-                                      <SelectValue placeholder="Selecciona un ingrediente" />
-                                    </SelectTrigger>
-                                  </FormControl>
-                                  <SelectContent>
-                                    {inventory.map((item) => (
-                                      <SelectItem key={item.id} value={item.id}>
-                                        {item.product}
-                                      </SelectItem>
-                                    ))}
-                                  </SelectContent>
-                                </Select>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                          <FormField
-                            control={form.control}
-                            name={`recipe.${index}.quantity`}
-                            render={({ field }) => (
-                              <FormItem className="w-32">
-                                <FormLabel>
-                                  Cantidad{' '}
-                                  <span className="text-muted-foreground text-xs">
-                                    ({selectedInventoryItem?.measure})
-                                  </span>
-                                </FormLabel>
-                                <FormControl>
-                                  <Input type="number" step="0.01" {...field} />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => removeRecipe(index)}
-                          >
-                            <Trash2 className="h-4 w-4 text-destructive" />
-                          </Button>
-                        </div>
-                      );
-                    })}
-                  </div>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    className="mt-4"
-                    onClick={() => appendRecipe({ inventoryId: '', quantity: 1 })}
-                  >
-                    <PlusCircle className="mr-2 h-4 w-4" />
-                    Añadir Ingrediente
-                  </Button>
                 </div>
 
                 <div className='mt-6'>

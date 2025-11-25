@@ -3,7 +3,6 @@
 import { createContext, useContext, useState, useEffect } from 'react';
 import AppShell from '@/components/app-shell';
 import {
-  inventoryData as initialInventoryData,
   packagingData as initialPackagingData,
   productsData as initialProductsData,
   laborSettingsData as initialLaborSettingsData,
@@ -16,7 +15,6 @@ import { Skeleton } from '@/components/ui/skeleton';
 
 interface AppDataContextType {
   products: Product[];
-  inventory: PriceList[];
   packaging: PriceList[];
   laborSettings: LaborSettings;
   overhead: OverheadItem[];
@@ -24,9 +22,6 @@ interface AppDataContextType {
   capital: CapitalItem[];
   addProduct: (product: Product) => void;
   updateProduct: (updatedProduct: Product) => void;
-  addInventoryItem: (item: PriceList) => void;
-  updateInventoryItem: (updatedItem: PriceList) => void;
-  deleteInventoryItem: (itemId: string) => void;
   addPackagingItem: (item: PriceList) => void;
   updatePackagingItem: (updatedItem: PriceList) => void;
   deletePackagingItem: (itemId: string) => void;
@@ -79,7 +74,6 @@ export default function AppLayout({
   children: React.ReactNode;
 }) {
   const [products, setProducts] = useState<Product[]>([]);
-  const [inventory, setInventory] = useState<PriceList[]>([]);
   const [packaging, setPackaging] = useState<PriceList[]>([]);
   const [laborSettings, setLaborSettings] = useState<LaborSettings>(initialLaborSettingsData);
   const [overhead, setOverhead] = useState<OverheadItem[]>([]);
@@ -89,7 +83,6 @@ export default function AppLayout({
 
   useEffect(() => {
     setProducts(getStoredData('products', initialProductsData));
-    setInventory(getStoredData('inventory', initialInventoryData));
     setPackaging(getStoredData('packaging', initialPackagingData));
     setLaborSettings(getStoredData('laborSettings', initialLaborSettingsData));
     setOverhead(getStoredData('overhead', initialOverheadData));
@@ -104,12 +97,6 @@ export default function AppLayout({
     }
   }, [products, isLoading]);
 
-  useEffect(() => {
-    if(!isLoading) {
-      localStorage.setItem('inventory', JSON.stringify(inventory));
-    }
-  }, [inventory, isLoading]);
-  
   useEffect(() => {
     if(!isLoading) {
       localStorage.setItem('packaging', JSON.stringify(packaging));
@@ -146,18 +133,6 @@ export default function AppLayout({
 
   const updateProduct = (updatedProduct: Product) => {
     setProducts((prev) => prev.map((p) => (p.id === updatedProduct.id ? updatedProduct : p)));
-  };
-
-  const addInventoryItem = (item: PriceList) => {
-    setInventory((prev) => [...prev, item]);
-  };
-
-  const updateInventoryItem = (updatedItem: PriceList) => {
-    setInventory((prev) => prev.map((i) => (i.id === updatedItem.id ? updatedItem : i)));
-  };
-  
-  const deleteInventoryItem = (itemId: string) => {
-    setInventory((prev) => prev.filter((i) => i.id !== itemId));
   };
   
   const addPackagingItem = (item: PriceList) => {
@@ -214,7 +189,6 @@ export default function AppLayout({
 
   const state = {
     products,
-    inventory,
     packaging,
     laborSettings,
     overhead,
@@ -222,9 +196,6 @@ export default function AppLayout({
     capital,
     addProduct,
     updateProduct,
-    addInventoryItem,
-    updateInventoryItem,
-    deleteInventoryItem,
     addPackagingItem,
     updatePackagingItem,
     deletePackagingItem,

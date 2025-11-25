@@ -15,9 +15,8 @@ const formatCurrency = (value: number) =>
   new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 }).format(value);
 
 const DashboardContent = () => {
-    const { inventory, packaging, products, laborSettings, overhead, transport, capital } = useAppData();
+    const { packaging, products, laborSettings, overhead, transport, capital } = useAppData();
     
-    const totalInventoryValue = inventory.reduce((sum, item) => sum + (item.value), 0);
     const totalPackagingValue = packaging.reduce((sum, item) => sum + (item.value), 0);
     const totalMonthlyLabor = laborSettings.monthlyCost;
     const totalMonthlyCIF = overhead.reduce((sum, item) => sum + (item.monthlyValue * item.productionPercentage), 0);
@@ -25,13 +24,7 @@ const DashboardContent = () => {
     const totalMonthlyCapital = capital.reduce((sum, item) => sum + (item.monthlyValue * item.productionPercentage), 0);
 
     const firstProduct = products[0];
-    const inventoryMap = new Map(inventory.map(item => [item.id, item]));
     const packagingMap = new Map(packaging.map(item => [item.id, item]));
-
-    const materialCost = firstProduct?.recipe ? firstProduct.recipe.reduce((sum, ing) => {
-        const item = inventoryMap.get(ing.inventoryId);
-        return sum + (item ? item.unitValue * ing.quantity : 0);
-    }, 0) : 0;
 
     const packagingCost = (firstProduct?.packaging || []).reduce((sum, pkg) => {
         const item = packagingMap.get(pkg.packagingId);
@@ -58,7 +51,6 @@ const DashboardContent = () => {
     const capitalCost = capitalRate * totalLaborHoursForProduct;
 
     const chartData = [
-        { name: "Materia Prima", cost: materialCost, fill: "var(--color-material)" },
         { name: "Empaque", cost: packagingCost, fill: "var(--color-packaging)" },
         { name: "Mano de Obra", cost: laborCost, fill: "var(--color-labor)" },
         { name: "CIF", cost: overheadCost, fill: "var(--color-overhead)" },
@@ -69,10 +61,6 @@ const DashboardContent = () => {
     const chartConfig = {
         cost: {
             label: "Costo",
-        },
-        material: {
-            label: "Materia Prima",
-            color: "hsl(var(--chart-1))",
         },
         packaging: {
             label: "Empaque",
@@ -99,17 +87,7 @@ const DashboardContent = () => {
     return (
         <div className="flex flex-col gap-6">
             <PageHeader title="Dashboard" description="Bienvenido a ProdCost Pro. Aquí tienes un resumen de tu operación." />
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
-                <Card>
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">Valor Total Materia Prima</CardTitle>
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" className="h-4 w-4 text-muted-foreground"><rect width="20" height="14" x="2" y="7" rx="2" ry="2" /><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16" /></svg>
-                    </CardHeader>
-                    <CardContent>
-                        <div className="text-2xl font-bold">{formatCurrency(totalInventoryValue)}</div>
-                        <p className="text-xs text-muted-foreground">{inventory.length} items en stock</p>
-                    </CardContent>
-                </Card>
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
                 <Card>
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                         <CardTitle className="text-sm font-medium">Valor Total Empaques</CardTitle>
@@ -197,5 +175,3 @@ const DashboardContent = () => {
 export default function DashboardPage() {
     return <DashboardContent />;
 }
-
-    
