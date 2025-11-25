@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState } from 'react';
@@ -100,7 +99,18 @@ const ReportsContent = () => {
         : 0;
     const laborCost = totalLaborHours * hourRate;
 
-    const calculateIndirectCost = (items: IndirectCostItem[]) => {
+    const calculateIndirectCost = (items: IndirectCostItem[], totalMaterialCostForProduct: number) => {
+      const totalDirectCostsOfAllProducts = products.reduce((sum, p) => {
+          const pIngredientsCost = (p.ingredients || []).reduce((acc, ing) => {
+            const item = inventoryMap.get(ing.ingredientId);
+            return acc + (item ? item.unitValue * ing.quantity : 0);
+          }, 0);
+          return sum + pIngredientsCost;
+      }, 0);
+
+      const totalUnitsOfAllProducts = products.reduce((sum, p) => sum + p.batchSize, 0) || 1;
+
+
       return items.reduce((acc, item) => {
         const productionCost = item.monthlyValue * item.productionPercentage;
         let itemCost = 0;
@@ -110,18 +120,15 @@ const ReportsContent = () => {
             itemCost = totalLaborHours * rate;
             break;
           case 'material':
-            // Since we deleted material cost as a separate entity, we can base it on ingredients.
-            const totalMaterialCost = ingredientsCost;
-            if (totalMaterialCost > 0) {
-                const materialRate = productionCost / totalMaterialCost;
-                itemCost = ingredientsCost * materialRate;
+            if (totalDirectCostsOfAllProducts > 0) {
+                const materialRate = productionCost / totalDirectCostsOfAllProducts;
+                itemCost = totalMaterialCostForProduct * materialRate;
             } else {
                 itemCost = 0;
             }
             break;
           case 'units':
-             const totalUnits = products.reduce((sum, p) => sum + p.batchSize, 0) || 1;
-             const unitRate = productionCost / totalUnits;
+             const unitRate = productionCost / totalUnitsOfAllProducts;
              itemCost = product.batchSize * unitRate;
             break;
         }
@@ -129,9 +136,9 @@ const ReportsContent = () => {
       }, 0);
     };
 
-    const overheadCost = calculateIndirectCost(overhead);
-    const transportCost = calculateIndirectCost(transport);
-    const capitalCost = calculateIndirectCost(capital);
+    const overheadCost = calculateIndirectCost(overhead, ingredientsCost);
+    const transportCost = calculateIndirectCost(transport, ingredientsCost);
+    const capitalCost = calculateIndirectCost(capital, ingredientsCost);
     
     const totalCost = ingredientsCost + packagingCost + laborCost + overheadCost + transportCost + capitalCost;
     const unitCost = product.batchSize > 0 ? totalCost / product.batchSize : 0;
@@ -170,17 +177,17 @@ const ReportsContent = () => {
     if (!selectedProduct) return;
     const headers = ['Componente de Costo', 'Costo del Lote', 'Costo Unitario'];
     const data = [
-      ['Materia Prima', ingredientsCost],
-      ['Material de Empaque', packagingCost],
-      ['Mano de Obra', laborCost],
-      ['Costos Indirectos de Fabricación (CIF)', overheadCost],
-      ['Transporte', transportCost],
-      ['Inversión de Capital', capitalCost],
-      ['Costo Total del Lote (CTP)', totalCost],
-      [`Costo Unitario de Producción (por ${selectedProduct.batchUnit})`, unitCost],
-      ['Porcentaje de Rentabilidad', formatPercentage(profitPercentage)],
-      [`Precio de Venta Sugerido (por ${selectedProduct.batchUnit})`, salePrice],
-      [`Utilidad por Unidad (por ${selectedProduct.batchUnit})`, profitPerUnit],
+      ['Materia Prima', ingredientsCost, ingredientsCost/selectedProduct.batchSize],
+      ['Material de Empaque', packagingCost, packagingCost/selectedProduct.batchSize],
+      ['Mano de Obra', laborCost, laborCost/selectedProduct.batchSize],
+      ['Costos Indirectos de Fabricación (CIF)', overheadCost, overheadCost/selectedProduct.batchSize],
+      ['Transporte', transportCost, transportCost/selectedProduct.batchSize],
+      ['Inversión de Capital', capitalCost, capitalCost/selectedProduct.batchSize],
+      ['Costo Total del Lote (CTP)', totalCost, ''],
+      [`Costo Unitario de Producción (por ${selectedProduct.batchUnit})`, '', unitCost],
+      ['Porcentaje de Rentabilidad', '', formatPercentage(profitPercentage)],
+      [`Precio de Venta Sugerido (por ${selectedProduct.batchUnit})`, '', salePrice],
+      [`Utilidad por Unidad (por ${selectedProduct.batchUnit})`, '', profitPerUnit],
     ];
 
     const csvContent = [
@@ -494,7 +501,3 @@ const ReportsContent = () => {
 export default function ReportsPage() {
     return <ReportsContent />;
 }
-
-    
-
-    
