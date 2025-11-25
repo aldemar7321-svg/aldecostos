@@ -39,6 +39,7 @@ const navItems = [
   { href: "/labor", icon: Users, label: "Mano de Obra" },
   { href: "/overhead", icon: Factory, label: "Costos Indirectos" },
   { href: "/transport", icon: Truck, label: "Transporte" },
+  { href: "/capital-investment", icon: Landmark, label: "Inversión" },
   { href: "/finished-products", icon: Warehouse, label: "Productos Terminados" },
   { href: "/reports", icon: FileText, label: "Reportes" },
 ];
@@ -63,19 +64,6 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
         </SidebarHeader>
         <SidebarContent className="flex flex-col justify-between p-2">
           <SidebarMenu>
-            <SidebarMenuItem>
-                <Link href="/capital-investment">
-                    <SidebarMenuButton
-                        as="a"
-                        href="/capital-investment"
-                        isActive={pathname === "/capital-investment"}
-                        tooltip="Inversión"
-                    >
-                        <Landmark />
-                        <span>Inversión</span>
-                    </SidebarMenuButton>
-                </Link>
-            </SidebarMenuItem>
             {navItems.map((item) => (
               <SidebarMenuItem key={item.href}>
                 <Link href={item.href}>
