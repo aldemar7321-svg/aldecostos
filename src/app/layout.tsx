@@ -8,6 +8,7 @@ import {
   useState,
   useEffect,
   useCallback,
+  ReactNode,
 } from 'react';
 import type {
   Product,
@@ -71,28 +72,7 @@ export function useAppData() {
   return context;
 }
 
-const getStoredData = (key: string) => {
-  if (typeof window === 'undefined') return null;
-  const stored = localStorage.getItem(key);
-  try {
-    return stored ? JSON.parse(stored) : null;
-  } catch (e) {
-    console.error(`Error parsing JSON from localStorage key "${key}":`, e);
-    return null;
-  }
-};
-
-const storeData = (key: string, data: any) => {
-  if (typeof window !== 'undefined') {
-    localStorage.setItem(key, JSON.stringify(data));
-  }
-};
-
-export default function RootLayout({
-  children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
+function AppDataProvider({ children }: { children: ReactNode }) {
   const [products, setProducts] = useState<Product[]>([]);
   const [inventory, setInventory] = useState<PriceList[]>([]);
   const [packaging, setPackaging] = useState<PriceList[]>([]);
@@ -104,92 +84,45 @@ export default function RootLayout({
   const [isDataLoaded, setIsDataLoaded] = useState(false);
 
   useEffect(() => {
-    // This effect runs once on mount to bootstrap the application data.
-    const bootstrapData = () => {
-      const storedProducts = getStoredData('products');
-      if (storedProducts) {
-        setProducts(storedProducts);
-      } else {
-        setProducts(productsData);
-        storeData('products', productsData);
+    const getStoredData = (key: string, fallback: any) => {
+      const stored = localStorage.getItem(key);
+      if (stored) {
+        try {
+          return JSON.parse(stored);
+        } catch (e) {
+          console.error(`Error parsing JSON from localStorage key "${key}":`, e);
+          return fallback;
+        }
       }
-
-      const storedInventory = getStoredData('inventory');
-      if (storedInventory) {
-        setInventory(storedInventory);
-      } else {
-        setInventory(ingredientsData);
-        storeData('inventory', ingredientsData);
-      }
-      
-      const storedPackaging = getStoredData('packaging');
-      if (storedPackaging) {
-        setPackaging(storedPackaging);
-      } else {
-        setPackaging(packagingData);
-        storeData('packaging', packagingData);
-      }
-
-      const storedLaborSettings = getStoredData('laborSettings');
-      if (storedLaborSettings) {
-        setLaborSettings(storedLaborSettings);
-      } else {
-        setLaborSettings(laborSettingsData);
-        storeData('laborSettings', laborSettingsData);
-      }
-
-      const storedOverhead = getStoredData('overhead');
-      if (storedOverhead) {
-        setOverhead(storedOverhead);
-      } else {
-        setOverhead(overheadData);
-        storeData('overhead', overheadData);
-      }
-      
-      const storedTransport = getStoredData('transport');
-      if (storedTransport) {
-        setTransport(storedTransport);
-      } else {
-        setTransport(transportData);
-        storeData('transport', transportData);
-      }
-
-      const storedCapital = getStoredData('capital');
-      if (storedCapital) {
-        setCapital(storedCapital);
-      } else {
-        setCapital(capitalData);
-        storeData('capital', capitalData);
-      }
-      
-      const storedFinishedProducts = getStoredData('finishedProducts');
-      if (storedFinishedProducts) {
-        setFinishedProducts(storedFinishedProducts);
-      } else {
-        setFinishedProducts(finishedProductsData);
-        storeData('finishedProducts', finishedProductsData);
-      }
-
-      setIsDataLoaded(true);
+      return fallback;
     };
-
-    bootstrapData();
+  
+    setProducts(getStoredData('products', productsData));
+    setInventory(getStoredData('inventory', ingredientsData));
+    setPackaging(getStoredData('packaging', packagingData));
+    setLaborSettings(getStoredData('laborSettings', laborSettingsData));
+    setOverhead(getStoredData('overhead', overheadData));
+    setTransport(getStoredData('transport', transportData));
+    setCapital(getStoredData('capital', capitalData));
+    setFinishedProducts(getStoredData('finishedProducts', finishedProductsData));
+    
+    setIsDataLoaded(true);
   }, []);
 
-  useEffect(() => { if (isDataLoaded) storeData('products', products) }, [products, isDataLoaded]);
-  useEffect(() => { if (isDataLoaded) storeData('inventory', inventory) }, [inventory, isDataLoaded]);
-  useEffect(() => { if (isDataLoaded) storeData('packaging', packaging) }, [packaging, isDataLoaded]);
-  useEffect(() => { if (isDataLoaded) storeData('laborSettings', laborSettings) }, [laborSettings, isDataLoaded]);
-  useEffect(() => { if (isDataLoaded) storeData('overhead', overhead) }, [overhead, isDataLoaded]);
-  useEffect(() => { if (isDataLoaded) storeData('transport', transport) }, [transport, isDataLoaded]);
-  useEffect(() => { if (isDataLoaded) storeData('capital', capital) }, [capital, isDataLoaded]);
-  useEffect(() => { if (isDataLoaded) storeData('finishedProducts', finishedProducts) }, [finishedProducts, isDataLoaded]);
+  useEffect(() => { if (isDataLoaded) localStorage.setItem('products', JSON.stringify(products)) }, [products, isDataLoaded]);
+  useEffect(() => { if (isDataLoaded) localStorage.setItem('inventory', JSON.stringify(inventory)) }, [inventory, isDataLoaded]);
+  useEffect(() => { if (isDataLoaded) localStorage.setItem('packaging', JSON.stringify(packaging)) }, [packaging, isDataLoaded]);
+  useEffect(() => { if (isDataLoaded) localStorage.setItem('laborSettings', JSON.stringify(laborSettings)) }, [laborSettings, isDataLoaded]);
+  useEffect(() => { if (isDataLoaded) localStorage.setItem('overhead', JSON.stringify(overhead)) }, [overhead, isDataLoaded]);
+  useEffect(() => { if (isDataLoaded) localStorage.setItem('transport', JSON.stringify(transport)) }, [transport, isDataLoaded]);
+  useEffect(() => { if (isDataLoaded) localStorage.setItem('capital', JSON.stringify(capital)) }, [capital, isDataLoaded]);
+  useEffect(() => { if (isDataLoaded) localStorage.setItem('finishedProducts', JSON.stringify(finishedProducts)) }, [finishedProducts, isDataLoaded]);
   
   const createItem = useCallback(<T extends { id: string }>(
     setter: React.Dispatch<React.SetStateAction<T[]>>,
     item: Omit<T, 'id'>
   ) => {
-    setter(prev => [...prev, { ...item, id: `item-${Date.now()}` } as T]);
+    setter(prev => [...prev, { ...item, id: `item-${Date.now()}-${Math.random()}` } as T]);
   }, []);
 
   const updateItem = useCallback(<T extends { id: string }>(
@@ -238,6 +171,22 @@ export default function RootLayout({
     deleteFinishedProduct: (id) => deleteItem(setFinishedProducts, id),
   };
 
+  if (!isDataLoaded) {
+    return <div className="flex h-screen items-center justify-center">Cargando datos...</div>;
+  }
+
+  return (
+    <AppDataContext.Provider value={state}>
+      {children}
+    </AppDataContext.Provider>
+  );
+}
+
+export default function RootLayout({
+  children,
+}: Readonly<{
+  children: React.ReactNode;
+}>) {
   return (
     <html lang="es" suppressHydrationWarning>
       <head>
@@ -249,13 +198,9 @@ export default function RootLayout({
         />
       </head>
       <body className="font-body antialiased">
-        <AppDataContext.Provider value={state}>
-          {isDataLoaded ? (
-            <AppShell>{children}</AppShell>
-          ) : (
-            <div className="flex h-screen items-center justify-center">Cargando datos...</div>
-          )}
-        </AppDataContext.Provider>
+        <AppDataProvider>
+          <AppShell>{children}</AppShell>
+        </AppDataProvider>
         <Toaster />
       </body>
     </html>
