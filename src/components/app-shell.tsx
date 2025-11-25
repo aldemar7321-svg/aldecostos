@@ -32,7 +32,6 @@ import {
 import { Button } from "@/components/ui/button";
 
 const navItems = [
-  { href: "/capital-investment", icon: Landmark, label: "Inversión" },
   { href: "/dashboard", icon: LayoutDashboard, label: "Dashboard" },
   { href: "/inventory", icon: FlaskConical, label: "Materia Prima" },
   { href: "/packaging", icon: Package, label: "Empaques" },
@@ -64,6 +63,19 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
         </SidebarHeader>
         <SidebarContent className="flex flex-col justify-between p-2">
           <SidebarMenu>
+            <SidebarMenuItem>
+                <Link href="/capital-investment">
+                    <SidebarMenuButton
+                        as="a"
+                        href="/capital-investment"
+                        isActive={pathname === "/capital-investment"}
+                        tooltip="Inversión"
+                    >
+                        <Landmark />
+                        <span>Inversión</span>
+                    </SidebarMenuButton>
+                </Link>
+            </SidebarMenuItem>
             {navItems.map((item) => (
               <SidebarMenuItem key={item.href}>
                 <Link href={item.href}>
