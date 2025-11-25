@@ -234,5 +234,57 @@ service cloud.firestore {
       allow update: if isExistingOwner(userId) && request.resource.data.userId == resource.data.userId;
       allow delete: if isExistingOwner(userId);
     }
+    
+    /**
+     * @description Stores packaging items defined by a user.
+     * @path /users/{userId}/packaging/{packagingId}
+     * @principle Restricts access to a user's own data tree.
+     */
+    match /users/{userId}/packaging/{packagingId} {
+      allow get: if isOwner(userId);
+      allow list: if isOwner(userId);
+      allow create: if isOwner(userId) && request.resource.data.userId == userId;
+      allow update: if isExistingOwner(userId) && request.resource.data.userId == resource.data.userId;
+      allow delete: if isExistingOwner(userId);
+    }
+
+    /**
+     * @description Stores transport costs defined by a user.
+     * @path /users/{userId}/transportCosts/{transportCostId}
+     * @principle Restricts access to a user's own data tree.
+     */
+    match /users/{userId}/transportCosts/{transportCostId} {
+      allow get: if isOwner(userId);
+      allow list: if isOwner(userId);
+      allow create: if isOwner(userId) && request.resource.data.userId == userId;
+      allow update: if isExistingOwner(userId) && request.resource.data.userId == resource.data.userId;
+      allow delete: if isExistingOwner(userId);
+    }
+
+    /**
+     * @description Stores capital costs defined by a user.
+     * @path /users/{userId}/capitalCosts/{capitalCostId}
+     * @principle Restricts access to a user's own data tree.
+     */
+    match /users/{userId}/capitalCosts/{capitalCostId} {
+      allow get: if isOwner(userId);
+      allow list: if isOwner(userId);
+      allow create: if isOwner(userId) && request.resource.data.userId == userId;
+      allow update: if isExistingOwner(userId) && request.resource.data.userId == resource.data.userId;
+      allow delete: if isExistingOwner(userId);
+    }
+
+    /**
+     * @description Stores finished products defined by a user.
+     * @path /users/{userId}/finishedProducts/{finishedProductId}
+     * @principle Restricts access to a user's own data tree.
+     */
+    match /users/{userId}/finishedProducts/{finishedProductId} {
+      allow get: if isOwner(userId);
+      allow list: if isOwner(userId);
+      allow create: if isOwner(userId) && request.resource.data.userId == userId;
+      allow update: if isExistingOwner(userId) && request.resource.data.userId == resource.data.userId;
+      allow delete: if isExistingOwner(userId);
+    }
   }
 }
