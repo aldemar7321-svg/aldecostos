@@ -74,13 +74,15 @@ export function useAppData() {
 const getStoredData = (key: string, fallback: any) => {
   if (typeof window === 'undefined') return fallback;
   const stored = localStorage.getItem(key);
-  if (stored === 'undefined' || stored === null) return fallback;
-  try {
-    return JSON.parse(stored);
-  } catch (e) {
-    console.error(`Error parsing JSON from localStorage key "${key}":`, e);
-    return fallback;
+  if (stored) {
+    try {
+      return JSON.parse(stored);
+    } catch (e) {
+      console.error(`Error parsing JSON from localStorage key "${key}":`, e);
+      return fallback;
+    }
   }
+  return fallback;
 };
 
 const storeData = (key: string, data: any) => {
@@ -105,14 +107,25 @@ export default function RootLayout({
   const [isDataLoaded, setIsDataLoaded] = useState(false);
 
   useEffect(() => {
-    setProducts(getStoredData('products', productsData));
-    setInventory(getStoredData('inventory', ingredientsData));
-    setPackaging(getStoredData('packaging', packagingData));
-    setLaborSettings(getStoredData('laborSettings', laborSettingsData));
-    setOverhead(getStoredData('overhead', overheadData));
-    setTransport(getStoredData('transport', transportData));
-    setCapital(getStoredData('capital', capitalData));
-    setFinishedProducts(getStoredData('finishedProducts', finishedProductsData));
+    // Check if data is already in localStorage to prevent overwriting on refresh
+    const initialProducts = getStoredData('products', productsData);
+    const initialInventory = getStoredData('inventory', ingredientsData);
+    const initialPackaging = getStoredData('packaging', packagingData);
+    const initialLaborSettings = getStoredData('laborSettings', laborSettingsData);
+    const initialOverhead = getStoredData('overhead', overheadData);
+    const initialTransport = getStoredData('transport', transportData);
+    const initialCapital = getStoredData('capital', capitalData);
+    const initialFinishedProducts = getStoredData('finishedProducts', finishedProductsData);
+
+    setProducts(initialProducts);
+    setInventory(initialInventory);
+    setPackaging(initialPackaging);
+    setLaborSettings(initialLaborSettings);
+    setOverhead(initialOverhead);
+    setTransport(initialTransport);
+    setCapital(initialCapital);
+    setFinishedProducts(initialFinishedProducts);
+    
     setIsDataLoaded(true);
   }, []);
 
