@@ -111,7 +111,7 @@ service cloud.firestore {
       allow get: if isOwner(userId);
       allow list: if false;
       allow create: if isOwner(userId) && request.resource.data.id == userId;
-      allow update: if isExistingOwner(userId) && request.resource.data.id == userId;
+      allow update: if isExistingOwner(userId) && request.resource.data.userId == resource.data.userId;
       allow delete: if false; // User profiles should not be deletable by clients
     }
 
@@ -152,6 +152,19 @@ service cloud.firestore {
       allow create: if isAdmin();
       allow update: if isExistingAdmin();
       allow delete: if isExistingAdmin();
+    }
+    
+    /**
+     * @description Stores user-specific raw material inventory.
+     * @path /users/{userId}/inventory/{inventoryId}
+     * @principle Restricts access to a user's own data tree.
+     */
+    match /users/{userId}/inventory/{inventoryId} {
+      allow get: if isOwner(userId);
+      allow list: if isOwner(userId);
+      allow create: if isOwner(userId) && request.resource.data.userId == userId;
+      allow update: if isExistingOwner(userId) && request.resource.data.userId == resource.data.userId;
+      allow delete: if isExistingOwner(userId);
     }
 
     /**
