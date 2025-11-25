@@ -74,7 +74,13 @@ export function useAppData() {
 const getStoredData = (key: string, fallback: any) => {
   if (typeof window === 'undefined') return fallback;
   const stored = localStorage.getItem(key);
-  return stored ? JSON.parse(stored) : fallback;
+  if (stored === 'undefined' || stored === null) return fallback;
+  try {
+    return JSON.parse(stored);
+  } catch (e) {
+    console.error(`Error parsing JSON from localStorage key "${key}":`, e);
+    return fallback;
+  }
 };
 
 const storeData = (key: string, data: any) => {
