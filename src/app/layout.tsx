@@ -41,6 +41,7 @@ interface AppDataContextType {
   finishedProducts: FinishedProduct[];
   addProduct: (product: Omit<Product, 'id'>) => void;
   updateProduct: (updatedProduct: Product) => void;
+  deleteProduct: (productId: string) => void;
   addIngredient: (item: Omit<PriceList, 'id'>) => void;
   updateIngredient: (updatedItem: PriceList) => void;
   deleteIngredient: (itemId: string) => void;
@@ -84,29 +85,36 @@ function AppDataProvider({ children }: { children: ReactNode }) {
   const [isDataLoaded, setIsDataLoaded] = useState(false);
 
   useEffect(() => {
-    const getStoredData = (key: string, fallback: any) => {
-      const stored = localStorage.getItem(key);
-      if (stored) {
+    const loadData = () => {
+      const getStoredData = (key: string, fallback: any) => {
+        const stored = localStorage.getItem(key);
+        // If stored is null (first load) or invalid JSON, use fallback
+        if (stored === null) {
+          localStorage.setItem(key, JSON.stringify(fallback));
+          return fallback;
+        }
         try {
           return JSON.parse(stored);
         } catch (e) {
           console.error(`Error parsing JSON from localStorage key "${key}":`, e);
+          localStorage.setItem(key, JSON.stringify(fallback));
           return fallback;
         }
-      }
-      return fallback;
+      };
+
+      setProducts(getStoredData('products', productsData));
+      setInventory(getStoredData('inventory', ingredientsData));
+      setPackaging(getStoredData('packaging', packagingData));
+      setLaborSettings(getStoredData('laborSettings', laborSettingsData));
+      setOverhead(getStoredData('overhead', overheadData));
+      setTransport(getStoredData('transport', transportData));
+      setCapital(getStoredData('capital', capitalData));
+      setFinishedProducts(getStoredData('finishedProducts', finishedProductsData));
+      
+      setIsDataLoaded(true);
     };
-  
-    setProducts(getStoredData('products', productsData));
-    setInventory(getStoredData('inventory', ingredientsData));
-    setPackaging(getStoredData('packaging', packagingData));
-    setLaborSettings(getStoredData('laborSettings', laborSettingsData));
-    setOverhead(getStoredData('overhead', overheadData));
-    setTransport(getStoredData('transport', transportData));
-    setCapital(getStoredData('capital', capitalData));
-    setFinishedProducts(getStoredData('finishedProducts', finishedProductsData));
-    
-    setIsDataLoaded(true);
+
+    loadData();
   }, []);
 
   useEffect(() => { if (isDataLoaded) localStorage.setItem('products', JSON.stringify(products)) }, [products, isDataLoaded]);
@@ -150,6 +158,7 @@ function AppDataProvider({ children }: { children: ReactNode }) {
     finishedProducts,
     addProduct: (product) => createItem(setProducts, product),
     updateProduct: (updated) => updateItem(setProducts, updated),
+    deleteProduct: (id) => deleteItem(setProducts, id),
     addIngredient: (item) => createItem(setInventory, item),
     updateIngredient: (updated) => updateItem(setInventory, updated),
     deleteIngredient: (id) => deleteItem(setInventory, id),
