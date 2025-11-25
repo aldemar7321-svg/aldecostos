@@ -51,6 +51,7 @@ import type { PriceList } from '@/lib/types';
 import { MoreHorizontal, PlusCircle, Trash2, Edit } from 'lucide-react';
 import { formatCurrency } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
+import { Card } from '@/components/ui/card';
 
 const formSchema = z.object({
   product: z.string().min(2, { message: 'El nombre debe tener al menos 2 caracteres.' }),
@@ -125,10 +126,11 @@ export default function InventoryPage() {
   
   const handleDelete = () => {
     if (deletingItemId) {
+      const itemToDelete = inventory.find(item => item.id === deletingItemId);
       deleteIngredient(deletingItemId);
       setIsAlertOpen(false);
       setDeletingItemId(null);
-      toast({ title: "Ingrediente eliminado", description: "El ingrediente ha sido eliminado." });
+      toast({ title: "Ingrediente eliminado", description: `"${itemToDelete?.product}" ha sido eliminado.` });
     }
   }
 
@@ -178,7 +180,7 @@ export default function InventoryPage() {
                           <Edit className="mr-2 h-4 w-4" />
                           Editar
                         </DropdownMenuItem>
-                        <DropdownMenuItem className="text-red-500" onClick={() => openDeleteConfirm(item.id)}>
+                        <DropdownMenuItem className="text-destructive hover:!text-destructive focus:!text-destructive" onClick={() => openDeleteConfirm(item.id)}>
                           <Trash2 className="mr-2 h-4 w-4" />
                           Eliminar
                         </DropdownMenuItem>
@@ -290,11 +292,3 @@ export default function InventoryPage() {
     </div>
   );
 }
-
-// Re-export Card component to be used locally
-const Card = ({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) => (
-  <div
-    className={`bg-card text-card-foreground border rounded-lg shadow-sm ${className}`}
-    {...props}
-  />
-);
