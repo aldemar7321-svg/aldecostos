@@ -22,7 +22,9 @@ import {
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Boxes } from 'lucide-react';
-import { useAuth, initiateEmailSignIn } from '@/firebase';
+import { useAuth, initiateEmailSignIn, useUser } from '@/firebase';
+import { useRouter } from 'next/navigation';
+import { useEffect } from 'react';
 
 const formSchema = z.object({
   email: z.string().email('Por favor, introduce un correo electrónico válido.'),
@@ -31,6 +33,17 @@ const formSchema = z.object({
 
 export default function LoginPage() {
   const auth = useAuth();
+  const { user, isUserLoading } = useUser();
+  const router = useRouter();
+
+  useEffect(() => {
+    // If the user is logged in, redirect them away from auth pages to the dashboard.
+    if (!isUserLoading && user) {
+      router.push('/dashboard');
+    }
+  }, [user, isUserLoading, router]);
+
+
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -42,8 +55,19 @@ export default function LoginPage() {
   const onSubmit = (values: z.infer<typeof formSchema>) => {
     initiateEmailSignIn(auth, values.email, values.password);
   };
+  
+    // While checking for user or if the user is already logged in and redirecting, show a loader.
+  if (isUserLoading || user) {
+    return (
+      <div className="flex h-screen w-full items-center justify-center">
+        <Boxes className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   return (
+    <div className="flex min-h-screen items-center justify-center bg-background p-4">
+    <div className="w-full max-w-sm">
     <Card>
       <CardHeader className="text-center">
         <div className="flex justify-center mb-4">
@@ -94,5 +118,7 @@ export default function LoginPage() {
         </div>
       </CardContent>
     </Card>
+    </div>
+    </div>
   );
 }

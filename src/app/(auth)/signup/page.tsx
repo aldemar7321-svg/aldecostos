@@ -90,7 +90,7 @@ export default function SignupPage() {
         </Form>
         <div className="mt-4 text-center text-sm">
           ¿Ya tienes una cuenta?{' '}
-          <Link href="/login" className="underline">
+          <Link href="/" className="underline">
             Inicia Sesión
           </Link>
         </div>
