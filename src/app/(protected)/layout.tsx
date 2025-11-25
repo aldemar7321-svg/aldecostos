@@ -1,51 +1,43 @@
 
 'use client';
 
-import { createContext, useContext, useState, useEffect } from 'react';
+import { createContext, useContext, useMemo } from 'react';
 import AppShell from '@/components/app-shell';
-import {
-  ingredientsData as initialIngredientsData,
-  packagingData as initialPackagingData,
-  productsData as initialProductsData,
-  laborSettingsData as initialLaborSettingsData,
-  overheadData as initialOverheadData,
-  transportData as initialTransportData,
-  capitalData as initialCapitalData,
-  finishedProductsData as initialFinishedProductsData,
-} from '@/lib/data';
-import type { Product, PriceList, LaborSettings, OverheadItem, TransportItem, CapitalItem, FinishedProduct } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
-import { useUser } from '@/firebase';
+import { useUser, useFirestore, useCollection, useMemoFirebase, addDocumentNonBlocking, setDocumentNonBlocking, deleteDocumentNonBlocking } from '@/firebase';
 import { useRouter } from 'next/navigation';
+import { collection, doc } from 'firebase/firestore';
+import type { Product, PriceList, LaborSettings, OverheadItem, TransportItem, CapitalItem, FinishedProduct } from '@/lib/types';
+
 
 interface AppDataContextType {
-  products: Product[];
-  inventory: PriceList[];
-  packaging: PriceList[];
-  laborSettings: LaborSettings;
-  overhead: OverheadItem[];
-  transport: TransportItem[];
-  capital: CapitalItem[];
-  finishedProducts: FinishedProduct[];
-  addProduct: (product: Product) => void;
+  products: Product[] | null;
+  inventory: PriceList[] | null;
+  packaging: PriceList[] | null;
+  laborSettings: LaborSettings | null;
+  overhead: OverheadItem[] | null;
+  transport: TransportItem[] | null;
+  capital: CapitalItem[] | null;
+  finishedProducts: FinishedProduct[] | null;
+  addProduct: (product: Omit<Product, 'id' | 'userId'>) => void;
   updateProduct: (updatedProduct: Product) => void;
-  addIngredient: (item: PriceList) => void;
+  addIngredient: (item: Omit<PriceList, 'id' | 'userId'>) => void;
   updateIngredient: (updatedItem: PriceList) => void;
   deleteIngredient: (itemId: string) => void;
-  addPackagingItem: (item: PriceList) => void;
+  addPackagingItem: (item: Omit<PriceList, 'id' | 'userId'>) => void;
   updatePackagingItem: (updatedItem: PriceList) => void;
   deletePackagingItem: (itemId: string) => void;
-  addOverheadItem: (item: OverheadItem) => void;
+  addOverheadItem: (item: Omit<OverheadItem, 'id' | 'userId'>) => void;
   updateOverheadItem: (updatedItem: OverheadItem) => void;
   deleteOverheadItem: (itemId: string) => void;
-  addTransportItem: (item: TransportItem) => void;
+  addTransportItem: (item: Omit<TransportItem, 'id' | 'userId'>) => void;
   updateTransportItem: (updatedItem: TransportItem) => void;
   deleteTransportItem: (itemId: string) => void;
-  addCapitalItem: (item: CapitalItem) => void;
+  addCapitalItem: (item: Omit<CapitalItem, 'id' | 'userId'>) => void;
   updateCapitalItem: (updatedItem: CapitalItem) => void;
   deleteCapitalItem: (itemId: string) => void;
   setLaborSettings: (settings: LaborSettings) => void;
-  addFinishedProduct: (item: FinishedProduct) => void;
+  addFinishedProduct: (item: Omit<FinishedProduct, 'id' | 'userId'>) => void;
   updateFinishedProduct: (updatedItem: FinishedProduct) => void;
   deleteFinishedProduct: (itemId: string) => void;
 }
@@ -60,236 +52,119 @@ export function useAppData() {
   return context;
 }
 
-const getStoredData = <T,>(key: string, fallback: T): T => {
-    if (typeof window === 'undefined') {
-        return fallback;
-    }
-    const stored = localStorage.getItem(key);
-    try {
-        if (!stored) return fallback;
-        const parsed = JSON.parse(stored);
-        // Basic migration/validation logic
-        if (key === 'overhead' || key === 'transport' || key === 'capital') {
-            if (Array.isArray(parsed) && parsed.length > 0 && !('allocationBasis' in parsed[0])) {
-                return (parsed as any[]).map(item => ({...item, allocationBasis: 'labor'})) as T;
-            }
-        }
-        if (key === 'products' && Array.isArray(parsed) && parsed.length > 0 && !('ingredients' in parsed[0])) {
-            return (parsed as any[]).map(item => ({...item, ingredients: []})) as T;
-        }
-        return parsed;
-    } catch (error) {
-        console.error(`Error parsing stored data for key "${key}":`, error);
-        return fallback;
-    }
-}
-
 export default function ProtectedLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const [products, setProducts] = useState<Product[]>([]);
-  const [inventory, setInventory] = useState<PriceList[]>([]);
-  const [packaging, setPackaging] = useState<PriceList[]>([]);
-  const [laborSettings, setLaborSettings] = useState<LaborSettings>(initialLaborSettingsData);
-  const [overhead, setOverhead] = useState<OverheadItem[]>([]);
-  const [transport, setTransport] = useState<TransportItem[]>([]);
-  const [capital, setCapital] = useState<CapitalItem[]>([]);
-  const [finishedProducts, setFinishedProducts] = useState<FinishedProduct[]>([]);
-  const [isDataLoading, setIsDataLoading] = useState(true);
-
   const { user, isUserLoading } = useUser();
+  const firestore = useFirestore();
   const router = useRouter();
 
-  useEffect(() => {
-    if (!isUserLoading && !user) {
-      router.push('/login');
-    }
-  }, [user, isUserLoading, router]);
+  if (!isUserLoading && !user) {
+    router.push('/');
+  }
 
-  useEffect(() => {
-    setProducts(getStoredData('products', initialProductsData));
-    setInventory(getStoredData('inventory', initialIngredientsData));
-    setPackaging(getStoredData('packaging', initialPackagingData));
-    setLaborSettings(getStoredData('laborSettings', initialLaborSettingsData));
-    setOverhead(getStoredData('overhead', initialOverheadData));
-    setTransport(getStoredData('transport', initialTransportData));
-    setCapital(getStoredData('capital', initialCapitalData));
-    setFinishedProducts(getStoredData('finishedProducts', initialFinishedProductsData));
-    setIsDataLoading(false);
-  }, []);
+  const userId = user?.uid;
 
-  useEffect(() => {
-    if(!isDataLoading) {
-      localStorage.setItem('products', JSON.stringify(products));
-    }
-  }, [products, isDataLoading]);
+  const recipesRef = useMemoFirebase(() => userId ? collection(firestore, 'users', userId, 'recipes') : null, [firestore, userId]);
+  const inventoryRef = useMemoFirebase(() => userId ? collection(firestore, 'users', userId, 'inventory') : null, [firestore, userId]);
+  const packagingRef = useMemoFirebase(() => userId ? collection(firestore, 'users', userId, 'packaging') : null, [firestore, userId]);
+  const laborCostsRef = useMemoFirebase(() => userId ? collection(firestore, 'users', userId, 'laborCosts') : null, [firestore, userId]);
+  const overheadCostsRef = useMemoFirebase(() => userId ? collection(firestore, 'users', userId, 'overheadCosts') : null, [firestore, userId]);
+  const transportCostsRef = useMemoFirebase(() => userId ? collection(firestore, 'users', userId, 'transportCosts') : null, [firestore, userId]);
+  const capitalCostsRef = useMemoFirebase(() => userId ? collection(firestore, 'users', userId, 'capitalCosts') : null, [firestore, userId]);
+  const finishedProductsRef = useMemoFirebase(() => userId ? collection(firestore, 'users', userId, 'finishedProducts') : null, [firestore, userId]);
 
-  useEffect(() => {
-    if(!isDataLoading) {
-      localStorage.setItem('inventory', JSON.stringify(inventory));
-    }
-  }, [inventory, isDataLoading]);
+  const { data: products, isLoading: productsLoading } = useCollection<Product>(recipesRef);
+  const { data: inventory, isLoading: inventoryLoading } = useCollection<PriceList>(inventoryRef);
+  const { data: packaging, isLoading: packagingLoading } = useCollection<PriceList>(packagingRef);
+  const { data: laborSettings, isLoading: laborLoading } = useCollection<LaborSettings>(laborCostsRef);
+  const { data: overhead, isLoading: overheadLoading } = useCollection<OverheadItem>(overheadCostsRef);
+  const { data: transport, isLoading: transportLoading } = useCollection<TransportItem>(transportCostsRef);
+  const { data: capital, isLoading: capitalLoading } = useCollection<CapitalItem>(capitalCostsRef);
+  const { data: finishedProducts, isLoading: finishedProductsLoading } = useCollection<FinishedProduct>(finishedProductsRef);
 
-  useEffect(() => {
-    if(!isDataLoading) {
-      localStorage.setItem('packaging', JSON.stringify(packaging));
-    }
-  }, [packaging, isDataLoading]);
+  const isLoading = isUserLoading || productsLoading || inventoryLoading || packagingLoading || laborLoading || overheadLoading || transportLoading || capitalLoading || finishedProductsLoading;
 
-  useEffect(() => {
-    if(!isDataLoading) {
-      localStorage.setItem('laborSettings', JSON.stringify(laborSettings));
-    }
-  }, [laborSettings, isDataLoading]);
-
-  useEffect(() => {
-    if(!isDataLoading) {
-      localStorage.setItem('overhead', JSON.stringify(overhead));
-    }
-  }, [overhead, isDataLoading]);
-
-  useEffect(() => {
-    if(!isDataLoading) {
-      localStorage.setItem('transport', JSON.stringify(transport));
-    }
-  }, [transport, isDataLoading]);
-
-  useEffect(() => {
-    if(!isDataLoading) {
-      localStorage.setItem('capital', JSON.stringify(capital));
-    }
-  }, [capital, isDataLoading]);
-
-  useEffect(() => {
-    if(!isDataLoading) {
-      localStorage.setItem('finishedProducts', JSON.stringify(finishedProducts));
-    }
-  }, [finishedProducts, isDataLoading]);
-
-  const addProduct = (product: Product) => {
-    setProducts((prev) => [...prev, product]);
-  };
-
-  const updateProduct = (updatedProduct: Product) => {
-    setProducts((prev) => prev.map((p) => (p.id === updatedProduct.id ? updatedProduct : p)));
-  };
-
-  const addIngredient = (item: PriceList) => {
-    setInventory((prev) => [...prev, item]);
-  };
-
-  const updateIngredient = (updatedItem: PriceList) => {
-    setInventory((prev) => prev.map((i) => (i.id === updatedItem.id ? updatedItem : i)));
-  };
-
-  const deleteIngredient = (itemId: string) => {
-    setInventory((prev) => prev.filter((i) => i.id !== itemId));
-  };
-  
-  const addPackagingItem = (item: PriceList) => {
-    setPackaging((prev) => [...prev, item]);
-  };
-
-  const updatePackagingItem = (updatedItem: PriceList) => {
-    setPackaging((prev) => prev.map((i) => (i.id === updatedItem.id ? updatedItem : i)));
-  };
-  
-  const deletePackagingItem = (itemId: string) => {
-    setPackaging((prev) => prev.filter((i) => i.id !== itemId));
-  };
-
-  const addOverheadItem = (item: OverheadItem) => {
-    setOverhead((prev) => [...prev, item]);
-  };
-  
-  const updateOverheadItem = (updatedItem: OverheadItem) => {
-    setOverhead((prev) => prev.map((i) => (i.id === updatedItem.id ? updatedItem : i)));
-  };
-
-  const deleteOverheadItem = (itemId: string) => {
-    setOverhead((prev) => prev.filter((i) => i.id !== itemId));
-  };
-
-  const addTransportItem = (item: TransportItem) => {
-    setTransport((prev) => [...prev, item]);
-  };
-
-  const updateTransportItem = (updatedItem: TransportItem) => {
-    setTransport((prev) => prev.map((i) => (i.id === updatedItem.id ? updatedItem : i)));
-  };
-
-  const deleteTransportItem = (itemId: string) => {
-    setTransport((prev) => prev.filter((i) => i.id !== itemId));
-  };
-
-  const addCapitalItem = (item: CapitalItem) => {
-    setCapital((prev) => [...prev, item]);
-  };
-
-  const updateCapitalItem = (updatedItem: CapitalItem) => {
-    setCapital((prev) => prev.map((i) => (i.id === updatedItem.id ? updatedItem : i)));
-  };
-
-  const deleteCapitalItem = (itemId: string) => {
-    setCapital((prev) => prev.filter((i) => i.id !== itemId));
-  };
-
-  const addFinishedProduct = (item: FinishedProduct) => {
-    setFinishedProducts((prev) => [...prev, item]);
-  };
-
-  const updateFinishedProduct = (updatedItem: FinishedProduct) => {
-    setFinishedProducts((prev) => prev.map((i) => (i.id === updatedItem.id ? updatedItem : i)));
-  };
-
-  const deleteFinishedProduct = (itemId: string) => {
-    setFinishedProducts((prev) => prev.filter((i) => i.id !== itemId));
-  };
-
-  const handleSetLaborSettings = (settings: LaborSettings) => {
-    setLaborSettings(settings);
-  };
-
-  const state = {
+  const state = useMemo(() => ({
     products,
     inventory,
     packaging,
-    laborSettings,
+    laborSettings: laborSettings?.[0] || null,
     overhead,
     transport,
     capital,
     finishedProducts,
-    addProduct,
-    updateProduct,
-    addIngredient,
-    updateIngredient,
-    deleteIngredient,
-    addPackagingItem,
-    updatePackagingItem,
-    deletePackagingItem,
-    addOverheadItem,
-    updateOverheadItem,
-    deleteOverheadItem,
-    addTransportItem,
-    updateTransportItem,
-    deleteTransportItem,
-    addCapitalItem,
-    updateCapitalItem,
-    deleteCapitalItem,
-    setLaborSettings: handleSetLaborSettings,
-    addFinishedProduct,
-    updateFinishedProduct,
-    deleteFinishedProduct,
-  };
+    addProduct: (product: Omit<Product, 'id' | 'userId'>) => {
+        if (recipesRef) addDocumentNonBlocking(recipesRef, { ...product, userId });
+    },
+    updateProduct: (updatedProduct: Product) => {
+        if (userId) setDocumentNonBlocking(doc(firestore, 'users', userId, 'recipes', updatedProduct.id), { ...updatedProduct, userId }, { merge: true });
+    },
+    addIngredient: (item: Omit<PriceList, 'id' | 'userId'>) => {
+        if (inventoryRef) addDocumentNonBlocking(inventoryRef, { ...item, userId });
+    },
+    updateIngredient: (updatedItem: PriceList) => {
+        if (userId) setDocumentNonBlocking(doc(firestore, 'users', userId, 'inventory', updatedItem.id), { ...updatedItem, userId }, { merge: true });
+    },
+    deleteIngredient: (itemId: string) => {
+        if (userId) deleteDocumentNonBlocking(doc(firestore, 'users', userId, 'inventory', itemId));
+    },
+    addPackagingItem: (item: Omit<PriceList, 'id'| 'userId'>) => {
+        if (packagingRef) addDocumentNonBlocking(packagingRef, { ...item, userId });
+    },
+    updatePackagingItem: (updatedItem: PriceList) => {
+        if (userId) setDocumentNonBlocking(doc(firestore, 'users', userId, 'packaging', updatedItem.id), { ...updatedItem, userId }, { merge: true });
+    },
+    deletePackagingItem: (itemId: string) => {
+        if (userId) deleteDocumentNonBlocking(doc(firestore, 'users', userId, 'packaging', itemId));
+    },
+    addOverheadItem: (item: Omit<OverheadItem, 'id'| 'userId'>) => {
+        if (overheadCostsRef) addDocumentNonBlocking(overheadCostsRef, { ...item, userId });
+    },
+    updateOverheadItem: (updatedItem: OverheadItem) => {
+        if (userId) setDocumentNonBlocking(doc(firestore, 'users', userId, 'overheadCosts', updatedItem.id), { ...updatedItem, userId }, { merge: true });
+    },
+    deleteOverheadItem: (itemId: string) => {
+        if (userId) deleteDocumentNonBlocking(doc(firestore, 'users', userId, 'overheadCosts', itemId));
+    },
+    addTransportItem: (item: Omit<TransportItem, 'id'| 'userId'>) => {
+        if (transportCostsRef) addDocumentNonBlocking(transportCostsRef, { ...item, userId });
+    },
+    updateTransportItem: (updatedItem: TransportItem) => {
+        if (userId) setDocumentNonBlocking(doc(firestore, 'users', userId, 'transportCosts', updatedItem.id), { ...updatedItem, userId }, { merge: true });
+    },
+    deleteTransportItem: (itemId: string) => {
+        if (userId) deleteDocumentNonBlocking(doc(firestore, 'users', userId, 'transportCosts', itemId));
+    },
+    addCapitalItem: (item: Omit<CapitalItem, 'id'| 'userId'>) => {
+        if (capitalCostsRef) addDocumentNonBlocking(capitalCostsRef, { ...item, userId });
+    },
+    updateCapitalItem: (updatedItem: CapitalItem) => {
+        if (userId) setDocumentNonBlocking(doc(firestore, 'users', userId, 'capitalCosts', updatedItem.id), { ...updatedItem, userId }, { merge: true });
+    },
+    deleteCapitalItem: (itemId: string) => {
+        if (userId) deleteDocumentNonBlocking(doc(firestore, 'users', userId, 'capitalCosts', itemId));
+    },
+    setLaborSettings: (settings: LaborSettings) => {
+        if (laborCostsRef) setDocumentNonBlocking(doc(laborCostsRef, 'settings'), { ...settings, userId }, { merge: true });
+    },
+    addFinishedProduct: (item: Omit<FinishedProduct, 'id'| 'userId'>) => {
+        if (finishedProductsRef) addDocumentNonBlocking(finishedProductsRef, { ...item, userId });
+    },
+    updateFinishedProduct: (updatedItem: FinishedProduct) => {
+        if (userId) setDocumentNonBlocking(doc(firestore, 'users', userId, 'finishedProducts', updatedItem.id), { ...updatedItem, userId }, { merge: true });
+    },
+    deleteFinishedProduct: (itemId: string) => {
+        if (userId) deleteDocumentNonBlocking(doc(firestore, 'users', userId, 'finishedProducts', itemId));
+    },
+  }), [userId, firestore, products, inventory, packaging, laborSettings, overhead, transport, capital, finishedProducts, recipesRef, inventoryRef, packagingRef, laborCostsRef, overheadCostsRef, transportCostsRef, capitalCostsRef, finishedProductsRef]);
   
-  const isLoading = isUserLoading || isDataLoading;
-
-  if (isLoading) {
+  if (isLoading || !user) {
     return (
         <div className="flex h-screen items-center justify-center">
-            <div className="space-y-6 p-6">
+            <div className="space-y-6 p-6 w-full">
                 <div className="flex justify-between items-center">
                     <Skeleton className="h-9 w-64" />
                     <div className="flex gap-2">

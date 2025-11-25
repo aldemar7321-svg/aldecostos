@@ -25,7 +25,7 @@ export default function DashboardPage() {
             <BookHeart className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{products.length}</div>
+            <div className="text-2xl font-bold">{products?.length || 0}</div>
             <p className="text-xs text-muted-foreground">
               Total de productos definidos
             </p>
@@ -37,7 +37,7 @@ export default function DashboardPage() {
             <FlaskConical className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{inventory.length}</div>
+            <div className="text-2xl font-bold">{inventory?.length || 0}</div>
             <p className="text-xs text-muted-foreground">
               Insumos en inventario
             </p>
@@ -49,7 +49,7 @@ export default function DashboardPage() {
             <Package className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{packaging.length}</div>
+            <div className="text-2xl font-bold">{packaging?.length || 0}</div>
             <p className="text-xs text-muted-foreground">
               Empaques en inventario
             </p>
@@ -63,7 +63,7 @@ export default function DashboardPage() {
             <Warehouse className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{finishedProducts.length}</div>
+            <div className="text-2xl font-bold">{finishedProducts?.length || 0}</div>
             <p className="text-xs text-muted-foreground">
               Lotes en stock
             </p>
