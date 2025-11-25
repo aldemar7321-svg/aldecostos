@@ -205,8 +205,7 @@ const InventoryContent = () => {
         <CardHeader>
           <CardTitle>Lista de Precios</CardTitle>
           <CardDescription>
-            El 'Valor Unitario' es el costo real utilizado en todos los cálculos
-            de recetas.
+            Define el costo de tu materia prima. El &apos;Valor Unitario&apos; se calcula dividiendo el valor de compra entre la cantidad de compra y es la base para el costeo de las recetas.
           </CardDescription>
         </CardHeader>
         <CardContent>

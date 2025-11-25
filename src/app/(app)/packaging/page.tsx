@@ -206,8 +206,7 @@ const PackagingContent = () => {
         <CardHeader>
           <CardTitle>Lista de Precios de Empaques</CardTitle>
           <CardDescription>
-            El 'Valor Unitario' es el costo real utilizado en todos los cálculos
-            de costeo de producto.
+            Define el costo de tu material de empaque. El &apos;Valor Unitario&apos; se calcula automáticamente y es la base para el costeo del producto final.
           </CardDescription>
         </CardHeader>
         <CardContent>
