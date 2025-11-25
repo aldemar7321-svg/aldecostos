@@ -3,6 +3,7 @@
 import { createContext, useContext, useState, useEffect } from 'react';
 import AppShell from '@/components/app-shell';
 import {
+  ingredientsData as initialIngredientsData,
   packagingData as initialPackagingData,
   productsData as initialProductsData,
   laborSettingsData as initialLaborSettingsData,
@@ -15,6 +16,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 
 interface AppDataContextType {
   products: Product[];
+  inventory: PriceList[];
   packaging: PriceList[];
   laborSettings: LaborSettings;
   overhead: OverheadItem[];
@@ -22,6 +24,9 @@ interface AppDataContextType {
   capital: CapitalItem[];
   addProduct: (product: Product) => void;
   updateProduct: (updatedProduct: Product) => void;
+  addIngredient: (item: PriceList) => void;
+  updateIngredient: (updatedItem: PriceList) => void;
+  deleteIngredient: (itemId: string) => void;
   addPackagingItem: (item: PriceList) => void;
   updatePackagingItem: (updatedItem: PriceList) => void;
   deletePackagingItem: (itemId: string) => void;
@@ -61,6 +66,9 @@ const getStoredData = <T,>(key: string, fallback: T): T => {
                 return (parsed as any[]).map(item => ({...item, allocationBasis: 'labor'})) as T;
             }
         }
+        if (key === 'products' && Array.isArray(parsed) && parsed.length > 0 && !('ingredients' in parsed[0])) {
+            return (parsed as any[]).map(item => ({...item, ingredients: []})) as T;
+        }
         return parsed;
     } catch (error) {
         console.error(`Error parsing stored data for key "${key}":`, error);
@@ -74,6 +82,7 @@ export default function AppLayout({
   children: React.ReactNode;
 }) {
   const [products, setProducts] = useState<Product[]>([]);
+  const [inventory, setInventory] = useState<PriceList[]>([]);
   const [packaging, setPackaging] = useState<PriceList[]>([]);
   const [laborSettings, setLaborSettings] = useState<LaborSettings>(initialLaborSettingsData);
   const [overhead, setOverhead] = useState<OverheadItem[]>([]);
@@ -83,6 +92,7 @@ export default function AppLayout({
 
   useEffect(() => {
     setProducts(getStoredData('products', initialProductsData));
+    setInventory(getStoredData('inventory', initialIngredientsData));
     setPackaging(getStoredData('packaging', initialPackagingData));
     setLaborSettings(getStoredData('laborSettings', initialLaborSettingsData));
     setOverhead(getStoredData('overhead', initialOverheadData));
@@ -96,6 +106,12 @@ export default function AppLayout({
       localStorage.setItem('products', JSON.stringify(products));
     }
   }, [products, isLoading]);
+
+  useEffect(() => {
+    if(!isLoading) {
+      localStorage.setItem('inventory', JSON.stringify(inventory));
+    }
+  }, [inventory, isLoading]);
 
   useEffect(() => {
     if(!isLoading) {
@@ -133,6 +149,18 @@ export default function AppLayout({
 
   const updateProduct = (updatedProduct: Product) => {
     setProducts((prev) => prev.map((p) => (p.id === updatedProduct.id ? updatedProduct : p)));
+  };
+
+  const addIngredient = (item: PriceList) => {
+    setInventory((prev) => [...prev, item]);
+  };
+
+  const updateIngredient = (updatedItem: PriceList) => {
+    setInventory((prev) => prev.map((i) => (i.id === updatedItem.id ? updatedItem : i)));
+  };
+
+  const deleteIngredient = (itemId: string) => {
+    setInventory((prev) => prev.filter((i) => i.id !== itemId));
   };
   
   const addPackagingItem = (item: PriceList) => {
@@ -189,6 +217,7 @@ export default function AppLayout({
 
   const state = {
     products,
+    inventory,
     packaging,
     laborSettings,
     overhead,
@@ -196,6 +225,9 @@ export default function AppLayout({
     capital,
     addProduct,
     updateProduct,
+    addIngredient,
+    updateIngredient,
+    deleteIngredient,
     addPackagingItem,
     updatePackagingItem,
     deletePackagingItem,

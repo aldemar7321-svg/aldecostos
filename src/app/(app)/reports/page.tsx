@@ -50,7 +50,7 @@ const formatPercentage = (value: number) =>
   }).format(value);
 
 const ReportsContent = () => {
-  const { products, packaging, laborSettings, overhead, transport, capital } = useAppData();
+  const { products, inventory, packaging, laborSettings, overhead, transport, capital } = useAppData();
   const [selectedProductId, setSelectedProductId] = useState<string>(
     products[0]?.id || ''
   );
@@ -58,11 +58,13 @@ const ReportsContent = () => {
   const [controlNumber, setControlNumber] = useState('');
   const selectedProduct = products.find((p) => p.id === selectedProductId);
 
+  const inventoryMap = new Map(inventory.map((item) => [item.id, item]));
   const packagingMap = new Map(packaging.map((item) => [item.id, item]));
 
   const calculateCosts = (product: Product | undefined) => {
     if (!product) {
       return {
+        ingredientsCost: 0,
         packagingCost: 0,
         laborCost: 0,
         overheadCost: 0,
@@ -75,6 +77,11 @@ const ReportsContent = () => {
       };
     }
     
+    const ingredientsCost = (product.ingredients || []).reduce((acc, ing) => {
+      const item = inventoryMap.get(ing.ingredientId);
+      return acc + (item ? item.unitValue * ing.quantity : 0);
+    }, 0);
+
     const packagingCost = (product.packaging || []).reduce((acc, pkg) => {
       const item = packagingMap.get(pkg.packagingId);
       return acc + (item ? item.unitValue * pkg.quantity : 0);
@@ -102,11 +109,19 @@ const ReportsContent = () => {
             itemCost = totalLaborHours * rate;
             break;
           case 'material':
-            itemCost = 0; // No material cost
+            // Since we deleted material cost as a separate entity, we can base it on ingredients.
+            const totalMaterialCost = ingredientsCost;
+            if (totalMaterialCost > 0) {
+                const materialRate = productionCost / totalMaterialCost;
+                itemCost = ingredientsCost * materialRate;
+            } else {
+                itemCost = 0;
+            }
             break;
           case 'units':
-            const unitRate = productionCost / 1000;
-            itemCost = product.batchSize * unitRate;
+             const totalUnits = products.reduce((sum, p) => sum + p.batchSize, 0) || 1;
+             const unitRate = productionCost / totalUnits;
+             itemCost = product.batchSize * unitRate;
             break;
         }
         return acc + itemCost;
@@ -117,13 +132,14 @@ const ReportsContent = () => {
     const transportCost = calculateIndirectCost(transport);
     const capitalCost = calculateIndirectCost(capital);
     
-    const totalCost = packagingCost + laborCost + overheadCost + transportCost + capitalCost;
+    const totalCost = ingredientsCost + packagingCost + laborCost + overheadCost + transportCost + capitalCost;
     const unitCost = product.batchSize > 0 ? totalCost / product.batchSize : 0;
 
     const salePrice = profitPercentage < 1 ? unitCost / (1 - profitPercentage) : unitCost;
     const profitPerUnit = salePrice - unitCost;
 
     return {
+      ingredientsCost,
       packagingCost,
       laborCost,
       overheadCost,
@@ -137,6 +153,7 @@ const ReportsContent = () => {
   };
 
   const {
+    ingredientsCost,
     packagingCost,
     laborCost,
     overheadCost,
@@ -152,6 +169,7 @@ const ReportsContent = () => {
     if (!selectedProduct) return;
     const headers = ['Componente de Costo', 'Costo del Lote', 'Costo Unitario'];
     const data = [
+      ['Materia Prima', ingredientsCost],
       ['Material de Empaque', packagingCost],
       ['Mano de Obra', laborCost],
       ['Costos Indirectos de Fabricación (CIF)', overheadCost],
@@ -205,6 +223,7 @@ const ReportsContent = () => {
       startY: 65,
       head: [['Componente de Costo', 'Costo del Lote']],
       body: [
+        ['Materia Prima', formatCurrency(ingredientsCost)],
         ['Material de Empaque', formatCurrency(packagingCost)],
         ['Mano de Obra', formatCurrency(laborCost)],
         ['Costos Indirectos de Fabricación (CIF)', formatCurrency(overheadCost)],
@@ -334,6 +353,12 @@ const ReportsContent = () => {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
+                   <TableRow>
+                    <TableCell className="font-medium">Materia Prima</TableCell>
+                    <TableCell className="text-right">
+                      {formatCurrency(ingredientsCost)}
+                    </TableCell>
+                  </TableRow>
                   <TableRow>
                     <TableCell className="font-medium">Material de Empaque</TableCell>
                     <TableCell className="text-right">
@@ -446,7 +471,7 @@ const ReportsContent = () => {
                   </TableRow>
                 </TableBody>
               </Table>
-            </CardContent>
+            </CardFooter>
             <CardFooter className="justify-end bg-accent/10 rounded-b-lg">
               <div className="flex flex-col items-end">
                 <p className="text-muted-foreground">
