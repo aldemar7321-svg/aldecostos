@@ -14,6 +14,8 @@ import {
 } from '@/lib/data';
 import type { Product, PriceList, LaborSettings, OverheadItem, TransportItem, CapitalItem, FinishedProduct } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useUser } from '@/firebase';
+import { useRouter } from 'next/navigation';
 
 interface AppDataContextType {
   products: Product[];
@@ -81,7 +83,7 @@ const getStoredData = <T,>(key: string, fallback: T): T => {
     }
 }
 
-export default function AppLayout({
+export default function ProtectedAppLayout({
   children,
 }: {
   children: React.ReactNode;
@@ -94,7 +96,16 @@ export default function AppLayout({
   const [transport, setTransport] = useState<TransportItem[]>([]);
   const [capital, setCapital] = useState<CapitalItem[]>([]);
   const [finishedProducts, setFinishedProducts] = useState<FinishedProduct[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isDataLoading, setIsDataLoading] = useState(true);
+
+  const { user, isUserLoading } = useUser();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (!isUserLoading && !user) {
+      router.push('/login');
+    }
+  }, [user, isUserLoading, router]);
 
   useEffect(() => {
     setProducts(getStoredData('products', initialProductsData));
@@ -105,56 +116,56 @@ export default function AppLayout({
     setTransport(getStoredData('transport', initialTransportData));
     setCapital(getStoredData('capital', initialCapitalData));
     setFinishedProducts(getStoredData('finishedProducts', initialFinishedProductsData));
-    setIsLoading(false);
+    setIsDataLoading(false);
   }, []);
 
   useEffect(() => {
-    if(!isLoading) {
+    if(!isDataLoading) {
       localStorage.setItem('products', JSON.stringify(products));
     }
-  }, [products, isLoading]);
+  }, [products, isDataLoading]);
 
   useEffect(() => {
-    if(!isLoading) {
+    if(!isDataLoading) {
       localStorage.setItem('inventory', JSON.stringify(inventory));
     }
-  }, [inventory, isLoading]);
+  }, [inventory, isDataLoading]);
 
   useEffect(() => {
-    if(!isLoading) {
+    if(!isDataLoading) {
       localStorage.setItem('packaging', JSON.stringify(packaging));
     }
-  }, [packaging, isLoading]);
+  }, [packaging, isDataLoading]);
 
   useEffect(() => {
-    if(!isLoading) {
+    if(!isDataLoading) {
       localStorage.setItem('laborSettings', JSON.stringify(laborSettings));
     }
-  }, [laborSettings, isLoading]);
+  }, [laborSettings, isDataLoading]);
 
   useEffect(() => {
-    if(!isLoading) {
+    if(!isDataLoading) {
       localStorage.setItem('overhead', JSON.stringify(overhead));
     }
-  }, [overhead, isLoading]);
+  }, [overhead, isDataLoading]);
 
   useEffect(() => {
-    if(!isLoading) {
+    if(!isDataLoading) {
       localStorage.setItem('transport', JSON.stringify(transport));
     }
-  }, [transport, isLoading]);
+  }, [transport, isDataLoading]);
 
   useEffect(() => {
-    if(!isLoading) {
+    if(!isDataLoading) {
       localStorage.setItem('capital', JSON.stringify(capital));
     }
-  }, [capital, isLoading]);
+  }, [capital, isDataLoading]);
 
   useEffect(() => {
-    if(!isLoading) {
+    if(!isDataLoading) {
       localStorage.setItem('finishedProducts', JSON.stringify(finishedProducts));
     }
-  }, [finishedProducts, isLoading]);
+  }, [finishedProducts, isDataLoading]);
 
   const addProduct = (product: Product) => {
     setProducts((prev) => [...prev, product]);
@@ -271,11 +282,12 @@ export default function AppLayout({
     updateFinishedProduct,
     deleteFinishedProduct,
   };
+  
+  const isLoading = isUserLoading || isDataLoading;
 
-  return (
-    <AppDataContext.Provider value={state}>
-      <AppShell>
-        {isLoading ? (
+  if (isLoading) {
+    return (
+        <div className="flex h-screen items-center justify-center">
             <div className="space-y-6 p-6">
                 <div className="flex justify-between items-center">
                     <Skeleton className="h-9 w-64" />
@@ -286,7 +298,14 @@ export default function AppLayout({
                 </div>
                 <Skeleton className="h-[400px] w-full" />
             </div>
-        ) : children}
+        </div>
+    )
+  }
+
+  return (
+    <AppDataContext.Provider value={state}>
+      <AppShell>
+        {children}
       </AppShell>
     </AppDataContext.Provider>
   );

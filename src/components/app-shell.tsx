@@ -17,6 +17,7 @@ import {
   FlaskConical,
   Warehouse,
   Heart,
+  LogOut,
 } from "lucide-react";
 import {
   SidebarProvider,
@@ -28,8 +29,12 @@ import {
   SidebarMenuButton,
   SidebarTrigger,
   SidebarInset,
+  SidebarFooter,
+  SidebarSeparator,
 } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
+import { useAuth, useUser } from "@/firebase";
+import { signOut } from "firebase/auth";
 
 const navItems = [
   { href: "/dashboard", icon: LayoutDashboard, label: "Dashboard" },
@@ -50,6 +55,12 @@ const secondaryNavItems = [
 
 export default function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const { user } = useUser();
+  const auth = useAuth();
+
+  const handleSignOut = async () => {
+    await signOut(auth);
+  };
 
   return (
     <SidebarProvider>
@@ -98,6 +109,22 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
             ))}
           </SidebarMenu>
         </SidebarContent>
+        <SidebarFooter>
+            <SidebarSeparator />
+            <div className="p-2 flex flex-col gap-2">
+                {user && (
+                    <div className="flex items-center gap-2">
+                        <div className="flex-1 overflow-hidden">
+                            <p className="text-sm font-medium truncate">{user.email}</p>
+                        </div>
+                        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={handleSignOut}>
+                            <LogOut className="h-4 w-4" />
+                            <span className="sr-only">Sign out</span>
+                        </Button>
+                    </div>
+                )}
+            </div>
+        </SidebarFooter>
       </Sidebar>
       <SidebarInset>
         <header className="flex h-14 items-center gap-4 border-b bg-background/95 px-4 backdrop-blur supports-[backdrop-filter]:bg-background/60 md:px-6">
