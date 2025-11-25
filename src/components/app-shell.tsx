@@ -31,6 +31,7 @@ import {
 import { Button } from "@/components/ui/button";
 
 const navItems = [
+  { href: "/capital-investment", icon: Landmark, label: "Inversión" },
   { href: "/dashboard", icon: LayoutDashboard, label: "Dashboard" },
   { href: "/inventory", icon: FlaskConical, label: "Materia Prima" },
   { href: "/packaging", icon: Package, label: "Empaques" },
@@ -38,7 +39,6 @@ const navItems = [
   { href: "/labor", icon: Users, label: "Mano de Obra" },
   { href: "/overhead", icon: Factory, label: "Costos Indirectos" },
   { href: "/transport", icon: Truck, label: "Transporte" },
-  { href: "/capital-investment", icon: Landmark, label: "Inversión" },
   { href: "/finished-products", icon: Warehouse, label: "Productos Terminados" },
   { href: "/reports", icon: FileText, label: "Reportes" },
 ];
