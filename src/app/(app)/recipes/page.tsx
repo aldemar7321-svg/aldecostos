@@ -210,6 +210,21 @@ const RecipesContent = () => {
     setEditingProduct(null);
   };
 
+  const getUnitForIngredient = (ingredientId: string): string => {
+    const item = inventoryMap.get(ingredientId);
+    if (!item) return '';
+    const measure = item.measure;
+    if (measure === 'kg') return 'g';
+    if (measure === 'l') return 'ml';
+    return measure;
+  }
+  
+  const getUnitForPackaging = (packagingId: string): string => {
+      const item = packagingMap.get(packagingId);
+      if (!item) return '';
+      return item.measure;
+  }
+
   return (
     <div className="flex flex-col gap-6">
       <PageHeader
@@ -278,7 +293,7 @@ const RecipesContent = () => {
                               return (
                                 <TableRow key={`${ingItem.ingredientId}-${index}`}>
                                   <TableCell className="font-medium">{item?.product || 'N/A'}</TableCell>
-                                  <TableCell className="text-right">{ingItem.quantity.toFixed(2)} {item?.measure}</TableCell>
+                                  <TableCell className="text-right">{ingItem.quantity.toFixed(2)} {getUnitForIngredient(ingItem.ingredientId)}</TableCell>
                                   <TableCell className="text-right">{formatCurrency(item?.unitValue || 0)}</TableCell>
                                   <TableCell className="text-right">{formatCurrency(totalValue)}</TableCell>
                                 </TableRow>
@@ -324,7 +339,7 @@ const RecipesContent = () => {
                                   </TableCell>
                                   <TableCell className="text-right">
                                     {pkgItem.quantity.toFixed(2)}{' '}
-                                    {item?.measure}
+                                    {getUnitForPackaging(pkgItem.packagingId)}
                                   </TableCell>
                                   <TableCell className="text-right">
                                     {formatCurrency(item?.unitValue || 0)}
@@ -520,9 +535,8 @@ const RecipesContent = () => {
                     <h4 className="font-medium mb-2">Materia Prima</h4>
                     <div className="space-y-4">
                         {ingredientFields.map((field, index) => {
-                             const selectedIngredient = inventory.find(
-                                (i) => i.id === form.watch(`ingredients.${index}.ingredientId`)
-                              );
+                             const selectedIngredientId = form.watch(`ingredients.${index}.ingredientId`);
+                             const unit = getUnitForIngredient(selectedIngredientId);
                             return (
                                 <div key={field.id} className="flex items-end gap-2 p-3 border rounded-lg bg-muted/50">
                                     <FormField
@@ -553,7 +567,7 @@ const RecipesContent = () => {
                                                  <FormLabel>
                                                     Cantidad{' '}
                                                     <span className="text-muted-foreground text-xs">
-                                                        ({selectedIngredient?.measure})
+                                                        ({unit})
                                                     </span>
                                                  </FormLabel>
                                                 <FormControl>
@@ -589,9 +603,8 @@ const RecipesContent = () => {
                   </h4>
                   <div className="space-y-4">
                     {packagingFields.map((field, index) => {
-                      const selectedPackagingItem = packaging.find(
-                        (i) => i.id === form.watch(`packaging.${index}.packagingId`)
-                      );
+                      const selectedPackagingId = form.watch(`packaging.${index}.packagingId`);
+                      const unit = getUnitForPackaging(selectedPackagingId);
                       return (
                         <div
                           key={field.id}
@@ -632,7 +645,7 @@ const RecipesContent = () => {
                                 <FormLabel>
                                   Cantidad{' '}
                                   <span className="text-muted-foreground text-xs">
-                                    ({selectedPackagingItem?.measure})
+                                    ({unit})
                                   </span>
                                 </FormLabel>
                                 <FormControl>

@@ -103,15 +103,21 @@ const InventoryContent = () => {
 
   const purchaseValue = form.watch('value');
   const purchaseQuantity = form.watch('purchaseQuantity');
-  const unitValue = form.watch('unitValue');
+  const measure = form.watch('measure');
 
   useEffect(() => {
     if (purchaseQuantity > 0) {
-      form.setValue('unitValue', purchaseValue / purchaseQuantity);
+      let divisor = purchaseQuantity;
+      if (measure === 'kg' || measure === 'l') {
+        divisor *= 1000;
+      }
+      form.setValue('unitValue', purchaseValue / divisor);
     } else {
       form.setValue('unitValue', 0);
     }
-  }, [purchaseValue, purchaseQuantity, form]);
+  }, [purchaseValue, purchaseQuantity, measure, form]);
+  
+  const unitValue = form.watch('unitValue');
 
   const handleAddNew = () => {
     setEditingItem(null);
@@ -142,12 +148,22 @@ const InventoryContent = () => {
   };
 
   function onSubmit(values: z.infer<typeof formSchema>) {
+    // Recalculate unitValue before submitting to be sure
+    let divisor = values.purchaseQuantity;
+     if (values.measure === 'kg' || values.measure === 'l') {
+        divisor *= 1000;
+      }
+    const finalUnitValue = values.value / divisor;
+
+    const itemData = {...values, unitValue: finalUnitValue};
+
+
     if (editingItem) {
-      updateIngredient({ ...editingItem, ...values });
+      updateIngredient({ ...editingItem, ...itemData });
     } else {
       const newItem: PriceList = {
         id: `ing-${Date.now()}`,
-        ...values,
+        ...itemData,
       };
       addIngredient(newItem);
     }
@@ -225,7 +241,7 @@ const InventoryContent = () => {
               {inventory?.map((item) => (
                 <TableRow key={item.id}>
                   <TableCell className="font-medium">{item.product}</TableCell>
-                  <TableCell className="text-center">{item.purchaseQuantity ? `${item.purchaseQuantity} ${item.measure}` : item.measure}</TableCell>
+                  <TableCell className="text-center">{item.purchaseQuantity} {item.measure}</TableCell>
                   <TableCell className="text-right">
                     {formatCurrency(item.value)}
                   </TableCell>
@@ -360,7 +376,7 @@ const InventoryContent = () => {
               <div className="space-y-2">
                 <Label>Valor Unitario (Calculado)</Label>
                 <p className="flex h-10 w-full items-center rounded-md border border-input bg-muted/50 px-3 py-2 text-sm font-semibold">
-                  {formatCurrency(unitValue)}
+                  {formatCurrency(unitValue)} / {measure.startsWith('k') || measure.startsWith('l') ? measure.slice(-1) === 'g' ? 'g' : 'ml' : measure.replace('unid.','unid')}
                 </p>
               </div>
               <SheetFooter className="pt-6">
