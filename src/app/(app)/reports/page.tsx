@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState } from 'react';
@@ -493,3 +494,7 @@ const ReportsContent = () => {
 export default function ReportsPage() {
     return <ReportsContent />;
 }
+
+    
+
+    
