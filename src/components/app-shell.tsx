@@ -33,11 +33,9 @@ import {
   SidebarSeparator,
 } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
-import { useAuth, useUser } from "@/firebase";
-import { signOut } from "firebase/auth";
 
 const navItems = [
-  { href: "/dashboard", icon: LayoutDashboard, label: "Dashboard" },
+  { href: "/", icon: LayoutDashboard, label: "Dashboard" },
   { href: "/inventory", icon: FlaskConical, label: "Materia Prima" },
   { href: "/packaging", icon: Package, label: "Empaques" },
   { href: "/recipes", icon: BookHeart, label: "Recetas" },
@@ -55,14 +53,6 @@ const secondaryNavItems = [
 
 export default function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const { user } = useUser();
-  const auth = useAuth();
-
-  const handleSignOut = async () => {
-    if (auth) {
-      await signOut(auth);
-    }
-  };
 
   return (
     <SidebarProvider>
@@ -114,17 +104,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
         <SidebarFooter>
             <SidebarSeparator />
             <div className="p-2 flex flex-col gap-2">
-                {user && (
-                    <div className="flex items-center gap-2">
-                        <div className="flex-1 overflow-hidden">
-                            <p className="text-sm font-medium truncate">{user.email}</p>
-                        </div>
-                        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={handleSignOut}>
-                            <LogOut className="h-4 w-4" />
-                            <span className="sr-only">Sign out</span>
-                        </Button>
-                    </div>
-                )}
+                
             </div>
         </SidebarFooter>
       </Sidebar>

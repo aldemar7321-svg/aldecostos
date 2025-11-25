@@ -1,65 +1,76 @@
 
 'use client';
 
-import { useUser, useAuth, initiateAnonymousSignIn } from '@/firebase';
-import { useRouter } from 'next/navigation';
-import { useEffect } from 'react';
-import { Boxes, LogIn } from 'lucide-react';
+import { PageHeader } from '@/components/page-header';
 import {
   Card,
   CardContent,
-  CardDescription,
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
+import { useAppData } from '@/app/layout-client';
+import { Package, FlaskConical, BookHeart, Warehouse } from 'lucide-react';
 
-export default function LoginPage() {
-  const { user, isUserLoading } = useUser();
-  const auth = useAuth();
-  const router = useRouter();
-
-  useEffect(() => {
-    // If the user is logged in, redirect them away from auth pages to the dashboard.
-    if (!isUserLoading && user) {
-      router.push('/dashboard');
-    }
-  }, [user, isUserLoading, router]);
-
-  const handleSignIn = () => {
-    if (auth) {
-      initiateAnonymousSignIn(auth);
-    }
-  };
-
-  // While checking for user or if the user is already logged in and redirecting, show a loader.
-  if (isUserLoading || user) {
-    return (
-      <div className="flex h-screen w-full items-center justify-center">
-        <Boxes className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    );
-  }
+export default function DashboardPage() {
+  const { products, inventory, packaging, finishedProducts } = useAppData();
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background p-4">
-      <Card className="w-full max-w-sm">
-        <CardHeader className="text-center">
-          <div className="flex justify-center mb-4">
-            <Boxes className="h-8 w-8 text-primary" />
-          </div>
-          <CardTitle>Bienvenido a ProdCost Pro</CardTitle>
-          <CardDescription>
-            Ingresa para empezar a gestionar tus costos.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Button onClick={handleSignIn} className="w-full">
-            <LogIn className="mr-2 h-4 w-4" />
-            Ingresar
-          </Button>
-        </CardContent>
-      </Card>
+    <div className="space-y-6">
+      <PageHeader title="Dashboard" description="Un resumen de la información clave de tu operación." />
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">
+              Recetas de Productos
+            </CardTitle>
+            <BookHeart className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{products?.length || 0}</div>
+            <p className="text-xs text-muted-foreground">
+              Total de productos definidos
+            </p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Materia Prima</CardTitle>
+            <FlaskConical className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{inventory?.length || 0}</div>
+            <p className="text-xs text-muted-foreground">
+              Insumos en inventario
+            </p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Empaques</CardTitle>
+            <Package className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{packaging?.length || 0}</div>
+            <p className="text-xs text-muted-foreground">
+              Empaques en inventario
+            </p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">
+              Productos Terminados
+            </CardTitle>
+            <Warehouse className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{finishedProducts?.length || 0}</div>
+            <p className="text-xs text-muted-foreground">
+              Lotes en stock
+            </p>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }
