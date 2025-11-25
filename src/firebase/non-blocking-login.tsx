@@ -7,7 +7,6 @@ import {
   // Assume getAuth and app are initialized elsewhere
 } from 'firebase/auth';
 import { getFirestore, doc, setDoc } from 'firebase/firestore';
-import { setDocumentNonBlocking } from './non-blocking-updates';
 
 /** Initiate anonymous sign-in (non-blocking). */
 export function initiateAnonymousSignIn(authInstance: Auth): void {
@@ -25,11 +24,10 @@ export function initiateEmailSignUp(authInstance: Auth, email: string, password:
       const db = getFirestore(authInstance.app);
       const userRef = doc(db, 'users', user.uid);
 
-      // Use the non-blocking function to create the document.
-      setDocumentNonBlocking(userRef, {
+      setDoc(userRef, {
         id: user.uid,
         email: user.email,
-      }, { merge: true });
+      });
     })
     .catch((error) => {
       // The onAuthStateChanged listener will handle UI updates, but you can log errors here if needed.
