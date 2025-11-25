@@ -23,15 +23,16 @@ import {
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Boxes } from 'lucide-react';
-import { useAuth, initiateEmailSignUp } from '@/firebase';
+import { useAuth, initiateEmailSignIn } from '@/firebase';
 
 const formSchema = z.object({
   email: z.string().email('Por favor, introduce un correo electrónico válido.'),
   password: z.string().min(6, 'La contraseña debe tener al menos 6 caracteres.'),
 });
 
-export default function SignupPage() {
+export default function LoginPage() {
   const auth = useAuth();
+  
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -41,19 +42,17 @@ export default function SignupPage() {
   });
 
   const onSubmit = (values: z.infer<typeof formSchema>) => {
-    initiateEmailSignUp(auth, values.email, values.password);
+    initiateEmailSignIn(auth, values.email, values.password);
   };
-
+  
   return (
     <Card>
       <CardHeader className="text-center">
         <div className="flex justify-center mb-4">
             <Boxes className="h-8 w-8 text-primary" />
         </div>
-        <CardTitle>Crear una Cuenta</CardTitle>
-        <CardDescription>
-          Regístrate para empezar a gestionar tus costos.
-        </CardDescription>
+        <CardTitle>Bienvenido de Nuevo</CardTitle>
+        <CardDescription>Inicia sesión para acceder a tu cuenta.</CardDescription>
       </CardHeader>
       <CardContent>
         <Form {...form}>
@@ -85,14 +84,14 @@ export default function SignupPage() {
               )}
             />
             <Button type="submit" className="w-full">
-              Crear Cuenta
+              Iniciar Sesión
             </Button>
           </form>
         </Form>
         <div className="mt-4 text-center text-sm">
-          ¿Ya tienes una cuenta?{' '}
-          <Link href="/login" className="underline">
-            Inicia Sesión
+          ¿No tienes una cuenta?{' '}
+          <Link href="/signup" className="underline">
+            Regístrate
           </Link>
         </div>
       </CardContent>
