@@ -350,7 +350,7 @@ const PackagingContent = () => {
                 name="value"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Valor de Compra</FormLabel>
+                    <FormLabel>Valor Total de la Compra</FormLabel>
                     <FormControl>
                       <Input type="number" {...field} />
                     </FormControl>
