@@ -1,5 +1,6 @@
 'use client';
 import { useState } from 'react';
+import Link from 'next/link';
 import { PageHeader } from '@/components/page-header';
 import { Button } from '@/components/ui/button';
 import {
@@ -115,9 +116,11 @@ export default function RecipesPage() {
                 </div>
               </CardContent>
               <CardFooter>
-                <Button variant="outline" className="w-full">
-                  <FileText className="mr-2 h-4 w-4" />
-                  Ver Ficha de Costo
+                <Button variant="outline" className="w-full" asChild>
+                  <Link href={`/reports?productId=${product.id}`}>
+                    <FileText className="mr-2 h-4 w-4" />
+                    Ver Ficha de Costo
+                  </Link>
                 </Button>
               </CardFooter>
             </Card>
