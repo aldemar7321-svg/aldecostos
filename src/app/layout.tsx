@@ -1,6 +1,6 @@
 'use client';
 
-import { FirebaseProvider } from '@/firebase';
+import { FirebaseClientProvider } from '@/firebase/client-provider';
 import './globals.css';
 import { Toaster } from '@/components/ui/toaster';
 
@@ -20,9 +20,9 @@ export default function RootLayout({
         />
       </head>
       <body className="font-body antialiased">
-        <FirebaseProvider>
+        <FirebaseClientProvider>
           {children}
-        </FirebaseProvider>
+        </FirebaseClientProvider>
         <Toaster />
       </body>
     </html>

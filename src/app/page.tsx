@@ -9,8 +9,7 @@ import {
 } from '@/components/ui/card';
 import { Boxes } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { initiateAnonymousSignIn } from '@/firebase/non-blocking-login';
-import { useUser } from '@/firebase';
+import { initiateAnonymousSignIn, useUser } from '@/firebase';
 import { useEffect } from 'react';
 
 export default function LoginPage() {
