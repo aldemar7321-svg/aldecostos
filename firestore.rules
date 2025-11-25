@@ -1,0 +1,238 @@
+/**
+ * @fileoverview Firestore Security Rules for the ProdCost Pro application.
+ * @author security-rules-architect
+ *
+ * @description
+ * This ruleset enforces a security model that combines strict user ownership with
+ * role-based access control (RBAC) for administrative functions. The core philosophy
+ * is to ensure data isolation and security through "Authorization Independence," where
+ * authorization decisions are made without costly cross-document reads, using
+ * path-based security and denormalized ownership fields.
+ *
+ * Core Philosophy:
+ * - User-Owned Data: All data created by a regular user is stored in subcollections
+ *   under their unique user document (`/users/{userId}`). Access is strictly limited
+ *   to the authenticated owner of that data tree.
+ * - Administrative Roles: A top-level `/roles_admin` collection serves as a lookup
+ *   table to identify users with administrative privileges. The existence of a user's
+ *   UID as a document in this collection grants them broad access to specific global
+ *   collections, like `/inventory`. This collection is not client-writable.
+ * - Default Deny: The default security posture is to deny all access. Permissions
+ *   are granted explicitly on a per-collection basis.
+ *
+ * Data Structure:
+ * - /users/{userId}: The root document for each user's profile and data.
+ * - /users/{userId}/*: Subcollections for user-specific data like recipes and costs.
+ * - /roles_admin/{userId}: A collection for granting admin privileges.
+ * - /inventory/{inventoryId}: A global collection for managing raw materials, accessible
+ *   only by administrators.
+ *
+ * Key Security Decisions:
+ * - No User Enumeration: Listing documents in the top-level `/users` collection
+ *   is explicitly forbidden to protect user privacy.
+ * - Admin Role Management: The `/roles_admin` collection is read-only for clients
+ *   and cannot be written to. This prevents privilege escalation. Admin roles must be
+ *   assigned server-side using the Admin SDK.
+ * - Authorization Independence: User-specific subcollections (e.g., recipes) must
+ *   contain a denormalized `userId` field. This allows security rules to validate
+ *   ownership directly from the document's data on create and update operations,
+ *   avoiding slow and costly `get()` calls to parent documents.
+ */
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // -------------------------------------------------------------------------
+    // Helper Functions
+    // -------------------------------------------------------------------------
+
+    /**
+     * Checks if the user is authenticated.
+     */
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    /**
+     * Checks if the requesting user's UID matches the provided userId.
+     * This is the foundation of the user-ownership model.
+     * @param userId The UID of the document owner.
+     */
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    /**
+     * Checks if the user is an owner and the document already exists.
+     * Used for safe update and delete operations.
+     * @param userId The UID of the document owner.
+     */
+    function isExistingOwner(userId) {
+      return isOwner(userId) && resource != null;
+    }
+
+    /**
+     * Checks if the requesting user has administrative privileges.
+     * This is determined by the existence of their UID in the /roles_admin collection.
+     */
+    function isAdmin() {
+      return isSignedIn() && exists(/databases/$(database)/documents/roles_admin/$(request.auth.uid));
+    }
+
+    /**
+     * Checks if the user is an admin and the document already exists.
+     * Used for safe update and delete operations on admin-controlled collections.
+     */
+    function isExistingAdmin() {
+      return isAdmin() && resource != null;
+    }
+
+    // -------------------------------------------------------------------------
+    // Collection Rules
+    // -------------------------------------------------------------------------
+
+    /**
+     * @description Stores user profile information.
+     * @path /users/{userId}
+     * @allow (create) An authenticated user can create their own user document.
+     *   - auth: { uid: 'user_abc' }
+     *   - path: /users/user_abc
+     *   - data: { id: 'user_abc', email: '...' }
+     * @deny (list) A user cannot list all other users in the system.
+     *   - auth: { uid: 'user_abc' }
+     *   - path: /users
+     * @deny (update) A user cannot change the ownership ID of their profile.
+     *   - auth: { uid: 'user_abc' }
+     *   - path: /users/user_abc
+     *   - data: { id: 'user_xyz' }
+     * @principle Enforces self-creation and ownership, and prevents user enumeration.
+     */
+    match /users/{userId} {
+      allow get: if isOwner(userId);
+      allow list: if false;
+      allow create: if isOwner(userId) && request.resource.data.id == userId;
+      allow update: if isExistingOwner(userId) && request.resource.data.id == resource.data.id;
+      allow delete: if false; // User profiles should not be deletable by clients
+    }
+
+    /**
+     * @description Lookup collection for admin privileges. Existence grants admin rights.
+     * @path /roles_admin/{userId}
+     * @allow (none) No client is allowed to read from or write to this collection.
+     * @deny (read) A regular user cannot check who the admins are.
+     *   - auth: { uid: 'user_abc' }
+     *   - path: /roles_admin/admin_xyz
+     * @deny (write) A user cannot grant themselves admin privileges.
+     *   - auth: { uid: 'user_abc' }
+     *   - path: /roles_admin/user_abc
+     * @principle Secures administrative roles by making them server-side managed only.
+     */
+    match /roles_admin/{userId} {
+      allow get: if false;
+      allow list: if false;
+      allow create: if false;
+      allow update: if false;
+      allow delete: if false;
+    }
+
+    /**
+     * @description Global collection of raw material inventory.
+     * @path /inventory/{inventoryId}
+     * @allow (read) An admin can read any inventory item.
+     *   - auth: { uid: 'admin_user' } -> exists(/roles_admin/admin_user)
+     *   - path: /inventory/item_123
+     * @deny (write) A non-admin user cannot create a new inventory item.
+     *   - auth: { uid: 'user_abc' } -> does not exist(/roles_admin/user_abc)
+     *   - path: /inventory/item_456
+     * @principle Restricts all access to a global resource to authorized admin roles.
+     */
+    match /inventory/{inventoryId} {
+      allow get: if isAdmin();
+      allow list: if isAdmin();
+      allow create: if isAdmin();
+      allow update: if isExistingAdmin();
+      allow delete: if isExistingAdmin();
+    }
+
+    /**
+     * @description Stores user-created product recipes.
+     * @path /users/{userId}/recipes/{recipeId}
+     * @allow (create) An authenticated user can create a recipe in their own data tree.
+     *   - auth: { uid: 'user_abc' }
+     *   - path: /users/user_abc/recipes/recipe_123
+     *   - data: { userId: 'user_abc', name: '...' }
+     * @deny (read) A user cannot read recipes belonging to another user.
+     *   - auth: { uid: 'user_abc' }
+     *   - path: /users/user_xyz/recipes/recipe_456
+     * @deny (create) A user cannot create a recipe with a mismatched owner ID.
+     *   - auth: { uid: 'user_abc' }
+     *   - path: /users/user_abc/recipes/recipe_123
+     *   - data: { userId: 'user_xyz', name: '...' }
+     * @principle Restricts access to a user's own data tree and ensures relational integrity.
+     */
+    match /users/{userId}/recipes/{recipeId} {
+      allow get: if isOwner(userId);
+      allow list: if isOwner(userId);
+      allow create: if isOwner(userId) && request.resource.data.userId == userId;
+      allow update: if isExistingOwner(userId) && request.resource.data.userId == resource.data.id;
+      allow delete: if isExistingOwner(userId);
+    }
+
+    /**
+     * @description Stores labor costs defined by a user.
+     * @path /users/{userId}/laborCosts/{laborCostId}
+     * @allow (list) An authenticated user can list their own labor costs.
+     *   - auth: { uid: 'user_abc' }
+     *   - path: /users/user_abc/laborCosts
+     * @deny (delete) A user cannot delete labor costs belonging to another user.
+     *   - auth: { uid: 'user_abc' }
+     *   - path: /users/user_xyz/laborCosts/cost_456
+     * @principle Restricts access to a user's own data tree and ensures relational integrity.
+     */
+    match /users/{userId}/laborCosts/{laborCostId} {
+      allow get: if isOwner(userId);
+      allow list: if isOwner(userId);
+      allow create: if isOwner(userId) && request.resource.data.userId == userId;
+      allow update: if isExistingOwner(userId) && request.resource.data.userId == resource.data.id;
+      allow delete: if isExistingOwner(userId);
+    }
+
+    /**
+     * @description Stores overhead costs defined by a user.
+     * @path /users/{userId}/overheadCosts/{overheadCostId}
+     * @allow (update) An authenticated user can update their own overhead costs.
+     *   - auth: { uid: 'user_abc' }
+     *   - path: /users/user_abc/overheadCosts/cost_123
+     * @deny (create) A user cannot create overhead costs for another user.
+     *   - auth: { uid: 'user_abc' }
+     *   - path: /users/user_xyz/overheadCosts/cost_456
+     * @principle Restricts access to a user's own data tree and ensures relational integrity.
+     */
+    match /users/{userId}/overheadCosts/{overheadCostId} {
+      allow get: if isOwner(userId);
+      allow list: if isOwner(userId);
+      allow create: if isOwner(userId) && request.resource.data.userId == userId;
+      allow update: if isExistingOwner(userId) && request.resource.data.userId == resource.data.id;
+      allow delete: if isExistingOwner(userId);
+    }
+
+    /**
+     * @description Stores consolidated cost data generated for a user.
+     * @path /users/{userId}/costConsolidations/{consolidationId}
+     * @allow (get) An authenticated user can get their own consolidated cost data.
+     *   - auth: { uid: 'user_abc' }
+     *   - path: /users/user_abc/costConsolidations/consol_123
+     * @deny (get) A user cannot get consolidated cost data for another user.
+     *   - auth: { uid: 'user_abc' }
+     *   - path: /users/user_xyz/costConsolidations/consol_456
+     * @principle Restricts access to a user's own data tree and ensures relational integrity.
+     */
+    match /users/{userId}/costConsolidations/{consolidationId} {
+      allow get: if isOwner(userId);
+      allow list: if isOwner(userId);
+      allow create: if isOwner(userId) && request.resource.data.userId == userId;
+      allow update: if isExistingOwner(userId) && request.resource.data.userId == resource.data.id;
+      allow delete: if isExistingOwner(userId);
+    }
+  }
+}
