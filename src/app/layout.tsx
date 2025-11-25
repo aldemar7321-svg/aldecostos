@@ -115,7 +115,7 @@ export default function RootLayout({
   useEffect(() => { if (isDataLoaded) storeData('packaging', packaging) }, [packaging, isDataLoaded]);
   useEffect(() => { if (isDataLoaded) storeData('laborSettings', laborSettings) }, [laborSettings, isDataLoaded]);
   useEffect(() => { if (isDataLoaded) storeData('overhead', overhead) }, [overhead, isDataLoaded]);
-useEffect(() => { if (isDataLoaded) storeData('transport', transport) }, [transport, isDataLoaded]);
+  useEffect(() => { if (isDataLoaded) storeData('transport', transport) }, [transport, isDataLoaded]);
   useEffect(() => { if (isDataLoaded) storeData('capital', capital) }, [capital, isDataLoaded]);
   useEffect(() => { if (isDataLoaded) storeData('finishedProducts', finishedProducts) }, [finishedProducts, isDataLoaded]);
   
