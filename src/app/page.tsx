@@ -9,16 +9,29 @@ import {
 } from '@/components/ui/card';
 import { Boxes } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { initiateAnonymousSignIn, useUser } from '@/firebase';
+import { useUser, useAuth, useFirestore } from '@/firebase';
 import { useEffect } from 'react';
+import { signInAnonymously } from 'firebase/auth';
+import { doc, setDoc } from 'firebase/firestore';
 
 export default function LoginPage() {
   const router = useRouter();
+  const auth = useAuth();
+  const firestore = useFirestore();
   const { data: user, isLoading } = useUser();
 
   const handleSignIn = async () => {
+    if (!auth || !firestore) return;
     try {
-      await initiateAnonymousSignIn();
+      const userCredential = await signInAnonymously(auth);
+      const user = userCredential.user;
+      if (user) {
+        const userDocRef = doc(firestore, 'users', user.uid);
+        await setDoc(userDocRef, {
+          uid: user.uid,
+          isAnonymous: user.isAnonymous,
+        }, { merge: true });
+      }
       router.push('/dashboard');
     } catch (error) {
       console.error('Error signing in anonymously:', error);
