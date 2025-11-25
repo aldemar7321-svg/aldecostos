@@ -1,4 +1,3 @@
-
 'use client';
 
 import { PageHeader } from '@/components/page-header';
@@ -8,7 +7,7 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import { useAppData } from '@/app/(protected)/layout';
+import { useAppData } from '@/app/layout';
 import { Package, FlaskConical, BookHeart, Warehouse } from 'lucide-react';
 
 export default function DashboardPage() {
