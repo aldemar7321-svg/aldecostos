@@ -376,7 +376,11 @@ const InventoryContent = () => {
               <div className="space-y-2">
                 <Label>Valor Unitario (Calculado)</Label>
                 <p className="flex h-10 w-full items-center rounded-md border border-input bg-muted/50 px-3 py-2 text-sm font-semibold">
-                  {formatCurrency(unitValue)} / {measure.startsWith('k') || measure.startsWith('l') ? measure.slice(-1) === 'g' ? 'g' : 'ml' : measure.replace('unid.','unid')}
+                  {formatCurrency(unitValue)} / {
+                    (measure === 'kg') ? 'g' :
+                    (measure === 'l') ? 'ml' :
+                    measure.replace('unid.', 'unid')
+                  }
                 </p>
               </div>
               <SheetFooter className="pt-6">
