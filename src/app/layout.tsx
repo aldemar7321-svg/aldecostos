@@ -94,6 +94,11 @@ function AppDataProvider({ children }: { children: ReactNode }) {
           return fallback;
         }
         try {
+          // If stored is "null" string, it's an old invalid state, so use fallback
+          if (stored === "null") {
+            localStorage.setItem(key, JSON.stringify(fallback));
+            return fallback;
+          }
           return JSON.parse(stored);
         } catch (e) {
           console.error(`Error parsing JSON from localStorage key "${key}":`, e);
