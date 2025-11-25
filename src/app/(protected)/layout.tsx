@@ -1,4 +1,3 @@
-
 'use client';
 
 import { createContext, useContext, useMemo } from 'react';
@@ -36,7 +35,7 @@ interface AppDataContextType {
   addCapitalItem: (item: Omit<CapitalItem, 'id' | 'userId'>) => void;
   updateCapitalItem: (updatedItem: CapitalItem) => void;
   deleteCapitalItem: (itemId: string) => void;
-  setLaborSettings: (settings: LaborSettings) => void;
+  setLaborSettings: (settings: Omit<LaborSettings, 'userId'>) => void;
   addFinishedProduct: (item: Omit<FinishedProduct, 'id' | 'userId'>) => void;
   updateFinishedProduct: (updatedItem: FinishedProduct) => void;
   deleteFinishedProduct: (itemId: string) => void;
@@ -79,11 +78,13 @@ export default function ProtectedLayout({
   const { data: products, isLoading: productsLoading } = useCollection<Product>(recipesRef);
   const { data: inventory, isLoading: inventoryLoading } = useCollection<PriceList>(inventoryRef);
   const { data: packaging, isLoading: packagingLoading } = useCollection<PriceList>(packagingRef);
-  const { data: laborSettings, isLoading: laborLoading } = useCollection<LaborSettings>(laborCostsRef);
+  const { data: laborSettingsList, isLoading: laborLoading } = useCollection<LaborSettings>(laborCostsRef);
   const { data: overhead, isLoading: overheadLoading } = useCollection<OverheadItem>(overheadCostsRef);
   const { data: transport, isLoading: transportLoading } = useCollection<TransportItem>(transportCostsRef);
   const { data: capital, isLoading: capitalLoading } = useCollection<CapitalItem>(capitalCostsRef);
   const { data: finishedProducts, isLoading: finishedProductsLoading } = useCollection<FinishedProduct>(finishedProductsRef);
+
+  const laborSettings = useMemo(() => (laborSettingsList && laborSettingsList.length > 0 ? laborSettingsList[0] : null), [laborSettingsList]);
 
   const isLoading = isUserLoading || productsLoading || inventoryLoading || packagingLoading || laborLoading || overheadLoading || transportLoading || capitalLoading || finishedProductsLoading;
 
@@ -91,19 +92,19 @@ export default function ProtectedLayout({
     products,
     inventory,
     packaging,
-    laborSettings: laborSettings?.[0] || null,
+    laborSettings,
     overhead,
     transport,
     capital,
     finishedProducts,
     addProduct: (product: Omit<Product, 'id' | 'userId'>) => {
-        if (recipesRef) addDocumentNonBlocking(recipesRef, { ...product, userId });
+        if (recipesRef && userId) addDocumentNonBlocking(recipesRef, { ...product, userId });
     },
     updateProduct: (updatedProduct: Product) => {
         if (userId) setDocumentNonBlocking(doc(firestore, 'users', userId, 'recipes', updatedProduct.id), { ...updatedProduct, userId }, { merge: true });
     },
     addIngredient: (item: Omit<PriceList, 'id' | 'userId'>) => {
-        if (inventoryRef) addDocumentNonBlocking(inventoryRef, { ...item, userId });
+        if (inventoryRef && userId) addDocumentNonBlocking(inventoryRef, { ...item, userId });
     },
     updateIngredient: (updatedItem: PriceList) => {
         if (userId) setDocumentNonBlocking(doc(firestore, 'users', userId, 'inventory', updatedItem.id), { ...updatedItem, userId }, { merge: true });
@@ -112,7 +113,7 @@ export default function ProtectedLayout({
         if (userId) deleteDocumentNonBlocking(doc(firestore, 'users', userId, 'inventory', itemId));
     },
     addPackagingItem: (item: Omit<PriceList, 'id'| 'userId'>) => {
-        if (packagingRef) addDocumentNonBlocking(packagingRef, { ...item, userId });
+        if (packagingRef && userId) addDocumentNonBlocking(packagingRef, { ...item, userId });
     },
     updatePackagingItem: (updatedItem: PriceList) => {
         if (userId) setDocumentNonBlocking(doc(firestore, 'users', userId, 'packaging', updatedItem.id), { ...updatedItem, userId }, { merge: true });
@@ -121,7 +122,7 @@ export default function ProtectedLayout({
         if (userId) deleteDocumentNonBlocking(doc(firestore, 'users', userId, 'packaging', itemId));
     },
     addOverheadItem: (item: Omit<OverheadItem, 'id'| 'userId'>) => {
-        if (overheadCostsRef) addDocumentNonBlocking(overheadCostsRef, { ...item, userId });
+        if (overheadCostsRef && userId) addDocumentNonBlocking(overheadCostsRef, { ...item, userId });
     },
     updateOverheadItem: (updatedItem: OverheadItem) => {
         if (userId) setDocumentNonBlocking(doc(firestore, 'users', userId, 'overheadCosts', updatedItem.id), { ...updatedItem, userId }, { merge: true });
@@ -130,7 +131,7 @@ export default function ProtectedLayout({
         if (userId) deleteDocumentNonBlocking(doc(firestore, 'users', userId, 'overheadCosts', itemId));
     },
     addTransportItem: (item: Omit<TransportItem, 'id'| 'userId'>) => {
-        if (transportCostsRef) addDocumentNonBlocking(transportCostsRef, { ...item, userId });
+        if (transportCostsRef && userId) addDocumentNonBlocking(transportCostsRef, { ...item, userId });
     },
     updateTransportItem: (updatedItem: TransportItem) => {
         if (userId) setDocumentNonBlocking(doc(firestore, 'users', userId, 'transportCosts', updatedItem.id), { ...updatedItem, userId }, { merge: true });
@@ -139,7 +140,7 @@ export default function ProtectedLayout({
         if (userId) deleteDocumentNonBlocking(doc(firestore, 'users', userId, 'transportCosts', itemId));
     },
     addCapitalItem: (item: Omit<CapitalItem, 'id'| 'userId'>) => {
-        if (capitalCostsRef) addDocumentNonBlocking(capitalCostsRef, { ...item, userId });
+        if (capitalCostsRef && userId) addDocumentNonBlocking(capitalCostsRef, { ...item, userId });
     },
     updateCapitalItem: (updatedItem: CapitalItem) => {
         if (userId) setDocumentNonBlocking(doc(firestore, 'users', userId, 'capitalCosts', updatedItem.id), { ...updatedItem, userId }, { merge: true });
@@ -147,11 +148,14 @@ export default function ProtectedLayout({
     deleteCapitalItem: (itemId: string) => {
         if (userId) deleteDocumentNonBlocking(doc(firestore, 'users', userId, 'capitalCosts', itemId));
     },
-    setLaborSettings: (settings: LaborSettings) => {
-        if (laborCostsRef) setDocumentNonBlocking(doc(laborCostsRef, 'settings'), { ...settings, userId }, { merge: true });
+    setLaborSettings: (settings: Omit<LaborSettings, 'userId'>) => {
+        if (laborCostsRef && userId) {
+            const settingsDocRef = doc(laborCostsRef, 'settings');
+            setDocumentNonBlocking(settingsDocRef, { ...settings, userId }, { merge: true });
+        }
     },
     addFinishedProduct: (item: Omit<FinishedProduct, 'id'| 'userId'>) => {
-        if (finishedProductsRef) addDocumentNonBlocking(finishedProductsRef, { ...item, userId });
+        if (finishedProductsRef && userId) addDocumentNonBlocking(finishedProductsRef, { ...item, userId });
     },
     updateFinishedProduct: (updatedItem: FinishedProduct) => {
         if (userId) setDocumentNonBlocking(doc(firestore, 'users', userId, 'finishedProducts', updatedItem.id), { ...updatedItem, userId }, { merge: true });

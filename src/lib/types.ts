@@ -45,6 +45,8 @@ export interface FinishedProduct {
 }
 
 export interface LaborSettings {
+  id?: string;
+  userId?: string;
   monthlyCost: number;
   totalMonthlyHours: number;
   workHoursPerDay: number;
