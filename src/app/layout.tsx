@@ -115,7 +115,7 @@ function AppDataProvider({ children }: { children: ReactNode }) {
       setTransport(getStoredData('transport', transportData));
       setCapital(getStoredData('capital', capitalData));
       setFinishedProducts(getStoredData('finishedProducts', finishedProductsData));
-      
+
       setIsDataLoaded(true);
     };
 
@@ -130,7 +130,7 @@ function AppDataProvider({ children }: { children: ReactNode }) {
   useEffect(() => { if (isDataLoaded) localStorage.setItem('transport', JSON.stringify(transport)) }, [transport, isDataLoaded]);
   useEffect(() => { if (isDataLoaded) localStorage.setItem('capital', JSON.stringify(capital)) }, [capital, isDataLoaded]);
   useEffect(() => { if (isDataLoaded) localStorage.setItem('finishedProducts', JSON.stringify(finishedProducts)) }, [finishedProducts, isDataLoaded]);
-  
+
   const createItem = useCallback(<T extends { id: string }>(
     setter: React.Dispatch<React.SetStateAction<T[]>>,
     item: Omit<T, 'id'>
@@ -211,7 +211,7 @@ export default function RootLayout({
           rel="stylesheet"
         />
       </head>
-      <body className="font-body antialiased">
+      <body className="font-body antialiased" suppressHydrationWarning>
         <AppDataProvider>
           <AppShell>{children}</AppShell>
         </AppDataProvider>

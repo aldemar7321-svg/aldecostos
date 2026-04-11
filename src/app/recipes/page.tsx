@@ -28,20 +28,64 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { useAppData } from '@/app/layout';
 import type { Product } from '@/lib/types';
 import { MoreHorizontal, PlusCircle, Trash2, Edit, FileText } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 export default function RecipesPage() {
-  const { products, deleteProduct } = useAppData();
+  const { products, addProduct, updateProduct, deleteProduct } = useAppData();
   const [isAlertOpen, setIsAlertOpen] = useState(false);
   const [deletingItemId, setDeletingItemId] = useState<string | null>(null);
+  
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [editingProduct, setEditingProduct] = useState<Product | null>(null);
+  const [formData, setFormData] = useState({ name: '', batchSize: 1, batchUnit: 'unidades' });
+
   const { toast } = useToast();
 
   const handleCreate = () => {
-    // TODO: Implement create/edit dialog
-    toast({ title: 'Función no implementada', description: 'La creación y edición de recetas se añadirá pronto.' });
+    setEditingProduct(null);
+    setFormData({ name: '', batchSize: 1, batchUnit: 'unidades' });
+    setIsDialogOpen(true);
+  };
+
+  const handleEdit = (product: Product) => {
+    setEditingProduct(product);
+    setFormData({ name: product.name, batchSize: product.batchSize, batchUnit: product.batchUnit });
+    setIsDialogOpen(true);
+  };
+
+  const handleSave = () => {
+    if (!formData.name.trim()) {
+      toast({ title: 'Error', description: 'El nombre es requerido.', variant: 'destructive' });
+      return;
+    }
+    if (editingProduct) {
+      updateProduct({ ...editingProduct, ...formData });
+      toast({ title: 'Receta actualizada', description: 'La receta se ha actualizado correctamente.' });
+    } else {
+      addProduct({
+        name: formData.name,
+        batchSize: formData.batchSize,
+        batchUnit: formData.batchUnit,
+        ingredients: [],
+        packaging: [],
+        laborProcesses: []
+      });
+      toast({ title: 'Receta creada', description: 'La receta se ha creado correctamente.' });
+    }
+    setIsDialogOpen(false);
   };
   
   const openDeleteConfirm = (id: string) => {
@@ -89,7 +133,7 @@ export default function RecipesPage() {
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
-                      <DropdownMenuItem onClick={handleCreate}>
+                      <DropdownMenuItem onClick={() => handleEdit(product)}>
                         <Edit className="mr-2 h-4 w-4" />
                         Editar
                       </DropdownMenuItem>
@@ -115,11 +159,17 @@ export default function RecipesPage() {
                   <p>{product.laborProcesses?.length || 0} procesos de mano de obra</p>
                 </div>
               </CardContent>
-              <CardFooter>
+              <CardFooter className="flex flex-col sm:flex-row gap-2">
+                <Button variant="outline" className="w-full" asChild>
+                  <Link href={`/recipes/${product.id}`}>
+                    <Edit className="mr-2 h-4 w-4" />
+                    Gestionar
+                  </Link>
+                </Button>
                 <Button variant="outline" className="w-full" asChild>
                   <Link href={`/reports?productId=${product.id}`}>
                     <FileText className="mr-2 h-4 w-4" />
-                    Ver Ficha de Costo
+                    Costo
                   </Link>
                 </Button>
               </CardFooter>
@@ -162,6 +212,54 @@ export default function RecipesPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{editingProduct ? 'Editar Receta' : 'Crear Receta'}</DialogTitle>
+            <DialogDescription>
+              {editingProduct ? 'Modifica los detalles de la receta.' : 'Ingresa los detalles básicos para tu nueva receta.'}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid gap-2">
+              <Label htmlFor="name">Nombre de Producto / Receta</Label>
+              <Input
+                id="name"
+                value={formData.name}
+                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                placeholder="Ej. Galletas de Chocolate"
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="grid gap-2">
+                <Label htmlFor="batchSize">Tamaño de Lote</Label>
+                <Input
+                  id="batchSize"
+                  type="number"
+                  min="0.1"
+                  step="any"
+                  value={formData.batchSize}
+                  onChange={(e) => setFormData({ ...formData, batchSize: parseFloat(e.target.value) || 0 })}
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="batchUnit">Unidad Lote</Label>
+                <Input
+                  id="batchUnit"
+                  value={formData.batchUnit}
+                  onChange={(e) => setFormData({ ...formData, batchUnit: e.target.value })}
+                  placeholder="Ej. unidades, kg, litros"
+                />
+              </div>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsDialogOpen(false)}>Cancelar</Button>
+            <Button onClick={handleSave}>Guardar</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

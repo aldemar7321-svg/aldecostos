@@ -235,7 +235,7 @@ export default function FinishedProductsPage() {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Producto</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <Select onValueChange={field.onChange} value={field.value} defaultValue={field.value}>
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder="Selecciona un producto" />

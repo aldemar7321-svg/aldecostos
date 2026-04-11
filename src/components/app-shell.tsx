@@ -16,6 +16,7 @@ import {
   Users,
   FlaskConical,
   Warehouse,
+  Sparkles,
 } from "lucide-react";
 import {
   SidebarProvider,
@@ -34,6 +35,7 @@ import { Button } from "@/components/ui/button";
 
 const navItems = [
   { href: "/dashboard", icon: LayoutDashboard, label: "Dashboard" },
+  { href: "/ai-assistant", icon: Sparkles, label: "Asistente IA" },
   { href: "/inventory", icon: FlaskConical, label: "Materia Prima" },
   { href: "/packaging", icon: Package, label: "Empaques" },
   { href: "/recipes", icon: BookHeart, label: "Recetas" },
@@ -63,17 +65,16 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
           <SidebarMenu>
             {navItems.map((item) => (
               <SidebarMenuItem key={item.href}>
-                <Link href={item.href}>
-                  <SidebarMenuButton
-                    as="a"
-                    href={item.href}
-                    isActive={pathname === item.href}
-                    tooltip={item.label}
-                  >
+                <SidebarMenuButton
+                  asChild
+                  isActive={pathname === item.href}
+                  tooltip={item.label}
+                >
+                  <Link href={item.href}>
                     <item.icon />
                     <span>{item.label}</span>
-                  </SidebarMenuButton>
-                </Link>
+                  </Link>
+                </SidebarMenuButton>
               </SidebarMenuItem>
             ))}
           </SidebarMenu>

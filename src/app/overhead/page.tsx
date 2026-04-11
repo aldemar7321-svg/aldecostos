@@ -268,7 +268,7 @@ export default function OverheadPage() {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Base de Asignación</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <Select onValueChange={field.onChange} value={field.value} defaultValue={field.value}>
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder="Selecciona una base" />

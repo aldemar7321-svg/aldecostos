@@ -1,7 +1,9 @@
 'use client';
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect, Suspense } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { PageHeader } from '@/components/page-header';
 import { useAppData } from '@/app/layout';
+import { exportRecipeToDisk } from '@/app/actions/export';
 import {
   Select,
   SelectContent,
@@ -38,8 +40,6 @@ import type {
   CapitalItem,
 } from '@/lib/types';
 
-import jsPDF from 'jspdf';
-import 'jspdf-autotable';
 
 // Extend the jsPDF interface to include autoTable
 declare module 'jspdf' {
@@ -48,7 +48,7 @@ declare module 'jspdf' {
   }
 }
 
-export default function ReportsPage() {
+function ReportsContent() {
   const {
     products,
     inventory,
@@ -58,9 +58,17 @@ export default function ReportsPage() {
     transport,
     capital,
   } = useAppData();
+  
+  const searchParams = useSearchParams();
+  const queryProductId = searchParams.get('productId');
+
   const [selectedProductId, setSelectedProductId] = useState<string | null>(
-    products.length > 0 ? products[0].id : null
+    queryProductId || (products.length > 0 ? products[0].id : null)
   );
+
+  useEffect(() => {
+    if (queryProductId) setSelectedProductId(queryProductId);
+  }, [queryProductId]);
 
   const dataMap = <T extends { id: string }>(arr: T[]): Map<string, T> => {
     return new Map(arr.map((item) => [item.id, item]));
@@ -75,7 +83,9 @@ export default function ReportsPage() {
   );
 
   const costSheet = useMemo(() => {
-    if (!selectedProduct || !laborSettings) return null;
+    if (!selectedProduct) return null;
+
+    const safeLaborSettings = laborSettings || { monthlyCost: 0, totalMonthlyHours: 1, workHoursPerDay: 8 };
 
     const {
       batchSize,
@@ -119,7 +129,7 @@ export default function ReportsPage() {
     );
 
     // 3. Labor Cost
-    const costPerHour = laborSettings.monthlyCost / laborSettings.totalMonthlyHours;
+    const costPerHour = safeLaborSettings.monthlyCost / safeLaborSettings.totalMonthlyHours;
     const laborDetails = (laborProcesses || []).map((proc: LaborProcess) => {
       const timeInHours = proc.timeUnit === 'minutos' ? proc.time / 60 : proc.time;
       const cost = timeInHours * proc.operators * costPerHour;
@@ -150,7 +160,7 @@ export default function ReportsPage() {
         let allocationFactor = 0;
         if (item.allocationBasis === 'labor' && totalLaborCost > 0) {
             // A simplified model: assume this batch's labor is a proxy for total labor this month
-             allocationFactor = totalLaborCost / (laborSettings.monthlyCost || 1);
+             allocationFactor = totalLaborCost / (safeLaborSettings.monthlyCost || 1);
         } else if (item.allocationBasis === 'material' && totalMaterialCost > 0) {
             // Simplified: assume this batch's material cost is a fraction of total
             allocationFactor = totalMaterialCost / 10000000; // Assume total monthly material cost
@@ -208,9 +218,13 @@ export default function ReportsPage() {
     capital,
   ]);
 
-  const handleExportPDF = () => {
+  const handleExportPDF = async () => {
     if (!costSheet) return;
     
+    const jsPDFModule = await import('jspdf');
+    const jsPDF = jsPDFModule.default;
+    await import('jspdf-autotable');
+
     const doc = new jsPDF();
     
     doc.setFontSize(18);
@@ -249,6 +263,23 @@ export default function ReportsPage() {
     });
 
     doc.save(`Ficha_Costo_${costSheet.productName.replace(/ /g, '_')}.pdf`);
+    
+    // Guardar en sistema de archivos local
+    try {
+      const pdfBase64 = doc.output('datauristring');
+      const csvData = [
+        ['Concepto', 'Costo Total Lote', 'Costo Unitario'],
+        ['Materiales Directos', costSheet.totalMaterialCost, costSheet.totalMaterialCost / costSheet.batchSize],
+        ['Empaques', costSheet.totalPackagingCost, costSheet.totalPackagingCost / costSheet.batchSize],
+        ['Mano de Obra Directa', costSheet.totalLaborCost, costSheet.totalLaborCost / costSheet.batchSize],
+        ['Costos Indirectos (CIF)', costSheet.indirectCosts.total, costSheet.indirectCosts.total / costSheet.batchSize],
+        ['COSTO TOTAL', costSheet.totalBatchCost, costSheet.unitCost]
+      ].map(e => e.join(',')).join('\n');
+      
+      await exportRecipeToDisk(costSheet.productName, csvData, pdfBase64);
+    } catch(err) {
+      console.error("Error al exportar carpeta", err);
+    }
 };
 
 
@@ -267,6 +298,7 @@ export default function ReportsPage() {
       <div className="w-full max-w-xs">
         <Select
           onValueChange={setSelectedProductId}
+          value={selectedProductId ?? undefined}
           defaultValue={selectedProductId ?? undefined}
         >
           <SelectTrigger>
@@ -306,7 +338,11 @@ export default function ReportsPage() {
               </div>
                <div className="flex flex-col space-y-1.5 rounded-lg bg-sky-100 dark:bg-sky-900/50 p-4">
                 <span className="text-sm text-sky-700 dark:text-sky-400">Margen de Ganancia</span>
-                <span className="text-2xl font-bold text-sky-800 dark:text-sky-300">{( (costSheet.suggestedPrice - costSheet.unitCost) / costSheet.suggestedPrice * 100).toFixed(0)}%</span>
+                <span className="text-2xl font-bold text-sky-800 dark:text-sky-300">
+                  {costSheet.suggestedPrice > 0 
+                    ? (( (costSheet.suggestedPrice - costSheet.unitCost) / costSheet.suggestedPrice ) * 100).toFixed(0) 
+                    : 0}%
+                </span>
               </div>
             </CardContent>
           </Card>
@@ -444,5 +480,13 @@ export default function ReportsPage() {
         </div>
       )}
     </div>
+  );
+}
+
+export default function ReportsPage() {
+  return (
+    <Suspense fallback={<div className="flex h-screen items-center justify-center">Cargando reportes...</div>}>
+      <ReportsContent />
+    </Suspense>
   );
 }
