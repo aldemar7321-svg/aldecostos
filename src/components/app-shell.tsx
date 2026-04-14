@@ -39,6 +39,7 @@ const navItems = [
   { href: "/inventory", icon: FlaskConical, label: "Materia Prima" },
   { href: "/packaging", icon: Package, label: "Empaques" },
   { href: "/recipes", icon: BookHeart, label: "Recetas" },
+  { href: "/recipes/calculator", icon: Landmark, label: "Calculadora Costos" },
   { href: "/labor", icon: Users, label: "Mano de Obra" },
   { href: "/overhead", icon: Factory, label: "Costos Indirectos" },
   { href: "/transport", icon: Truck, label: "Transporte" },
