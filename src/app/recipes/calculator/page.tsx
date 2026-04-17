@@ -5,17 +5,33 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { Calculator, Save, BarChart3, Settings2, Package, TrendingUp, Printer } from "lucide-react";
+import { Calculator, Save, BarChart3, Settings2, Package, TrendingUp, Printer, FileText } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
-import { exportRecipeToDisk } from "@/app/actions/export";
+import { exportRecipeToDisk, getSavedCalculations } from "@/app/actions/export";
 import { useToast } from "@/hooks/use-toast";
+import { useEffect } from "react";
 
 export default function CalculatorPage() {
   const { toast } = useToast();
   const [isExporting, setIsExporting] = useState(false);
+  const [scenarioName, setScenarioName] = useState("Mi-Experimento");
+  const [history, setHistory] = useState<{id: string, name: string, date: string}[]>([]);
+
+  const loadHistory = async () => {
+    try {
+      const data = await getSavedCalculations();
+      setHistory(data);
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  useEffect(() => {
+    loadHistory();
+  }, []);
 
   // Batch Settings
   const [numBags, setNumBags] = useState<number>(60);
@@ -150,7 +166,7 @@ export default function CalculatorPage() {
         headStyles: { fillColor: [16, 185, 129] }
       });
 
-      doc.save(`Calculadora_Costos_${new Date().toISOString().split('T')[0]}.pdf`);
+      doc.save(`Calculadora_${scenarioName}_${new Date().toISOString().split('T')[0]}.pdf`);
 
       const pdfBase64 = doc.output('datauristring');
       
@@ -163,7 +179,8 @@ export default function CalculatorPage() {
         csvData += `${row[0]},${row[1].replace('$', '').replace(/\\./g, '')}\n`;
       });
 
-      const result = await exportRecipeToDisk("calculadora-dinamica", csvData, pdfBase64);
+      const safeFolder = scenarioName.trim() === "" ? "calculadora-dinamica" : `calculadora-${scenarioName.replace(/\\s+/g, '-')}`;
+      const result = await exportRecipeToDisk(safeFolder, csvData, pdfBase64);
       
       if (result.success) {
         toast({
@@ -171,6 +188,7 @@ export default function CalculatorPage() {
           description: "La calculadora dinámica ha guardado los datos localmente en formato CSV y PDF.",
           variant: "default",
         });
+        loadHistory();
       } else {
         throw new Error(result.error);
       }
@@ -198,13 +216,25 @@ export default function CalculatorPage() {
             Simulador de costos y márgenes para BIO-GENESIS
           </p>
         </div>
-        <div className="flex gap-2">
-          <Button variant="outline" onClick={handleExportPDF} disabled={isExporting} className="text-emerald-700 border-emerald-300 hover:bg-emerald-50 dark:hover:bg-emerald-950">
-            <Printer className="h-4 w-4 mr-2" /> {isExporting ? "Exportando..." : "Imprimir PDF"}
-          </Button>
-          <Button className="bg-emerald-600 hover:bg-emerald-700">
-            <Save className="h-4 w-4 mr-2" /> Guardar Escenario
-          </Button>
+        <div className="flex flex-col items-end gap-2">
+          <div className="flex items-center gap-2">
+            <Label htmlFor="scenarioName" className="text-sm font-medium text-emerald-800 dark:text-emerald-400">Nombre Variante:</Label>
+            <Input 
+              id="scenarioName"
+              value={scenarioName} 
+              onChange={(e) => setScenarioName(e.target.value)} 
+              placeholder="Ej. Con-Mas-Micorrizas"
+              className="w-48 h-9 border-emerald-200"
+            />
+          </div>
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={handleExportPDF} disabled={isExporting} className="text-emerald-700 border-emerald-300 hover:bg-emerald-50 dark:hover:bg-emerald-950">
+              <Printer className="h-4 w-4 mr-2" /> {isExporting ? "Exportando..." : "Imprimir PDF"}
+            </Button>
+            <Button className="bg-emerald-600 hover:bg-emerald-700">
+              <Save className="h-4 w-4 mr-2" /> Guardar Escenario
+            </Button>
+          </div>
         </div>
       </div>
 
@@ -386,6 +416,36 @@ export default function CalculatorPage() {
           </CardContent>
         </Card>
       </div>
+
+      {/* HISTORIAL DE SIMULACIONES */}
+      {history.length > 0 && (
+        <Card className="shadow-sm border-emerald-100">
+          <CardHeader className="bg-slate-50 dark:bg-slate-900 border-b">
+            <CardTitle className="text-lg flex items-center gap-2">
+              <FileText className="h-5 w-5 text-emerald-600" />
+              Historial de Simulaciones
+            </CardTitle>
+            <CardDescription>Escenarios guardados previamente en tu equipo local</CardDescription>
+          </CardHeader>
+          <CardContent className="pt-4 p-0">
+            <div className="divide-y">
+              {history.map((record) => (
+                <div key={record.id} className="p-4 flex items-center justify-between hover:bg-slate-50 dark:hover:bg-slate-900/50 transition-colors">
+                  <div>
+                    <h4 className="font-semibold text-emerald-900 dark:text-emerald-100">{record.name}</h4>
+                    <p className="text-xs text-muted-foreground">Guardado: {new Date(record.date).toLocaleDateString()} a las {new Date(record.date).toLocaleTimeString(undefined, {hour: '2-digit', minute:'2-digit'})}</p>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button variant="outline" size="sm" className="h-8" disabled>
+                      <Printer className="h-3 w-3 mr-1" /> PDF Generado
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
     </div>
   );
