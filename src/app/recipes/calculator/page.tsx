@@ -5,11 +5,18 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { Calculator, Save, BarChart3, Settings2, Package, TrendingUp } from "lucide-react";
+import { Calculator, Save, BarChart3, Settings2, Package, TrendingUp, Printer } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
+import { exportRecipeToDisk } from "@/app/actions/export";
+import { useToast } from "@/hooks/use-toast";
 
 export default function CalculatorPage() {
+  const { toast } = useToast();
+  const [isExporting, setIsExporting] = useState(false);
+
   // Batch Settings
   const [numBags, setNumBags] = useState<number>(60);
   const [targetMargin, setTargetMargin] = useState<number>(40);
@@ -92,6 +99,93 @@ export default function CalculatorPage() {
     };
   }, [prices, formula, numBags, targetMargin]);
 
+  const handleExportPDF = async () => {
+    setIsExporting(true);
+    try {
+      const doc = new jsPDF();
+      
+      doc.setFontSize(18);
+      doc.text("Reporte: Calculadora Dinámica de Costos BIO-GENESIS", 14, 20);
+      
+      doc.setFontSize(11);
+      doc.text(`Fecha: ${new Date().toLocaleDateString()}`, 14, 30);
+      doc.text(`Lote de Producción: ${numBags} Bolsas`, 14, 36);
+      doc.text(`Margen Deseado: ${targetMargin}%`, 140, 36);
+      doc.text(`Total Volumen del Lote: ${totals.totalKilosSolid.toLocaleString('es-CO')} Kg sólidos + ${totals.totalLitersFlos.toLocaleString('es-CO')} L Flos`, 14, 42);
+
+      const rawMaterialData = [
+        ["Harina Roca", `${formula.harinaRoca} g`, `$${prices.harinaRoca}`],
+        ["Terrabono", `${formula.terrabono} g`, `$${prices.terrabono}`],
+        ["Micorrizas", `${formula.micorrizas} g`, `$${prices.micorrizas}`],
+        ["N30", `${formula.n30} g`, `$${prices.n30}`],
+        ["Sulfato Zinc", `${formula.sulfatoZinc} g`, `$${prices.sulfatoZinc}`],
+        ["Sulfato Cobre", `${formula.sulfatoCobre} g`, `$${prices.sulfatoCobre}`],
+        ["Ácido Bórico", `${formula.acidoBorico} g`, `$${prices.acidoBorico}`],
+        ["Flos", `${formula.flos} ml`, `$${prices.flos}`],
+        ["Bolsa", `${formula.bolsa} und`, `$${prices.bolsa}`],
+        ["Etiqueta", `${formula.etiqueta} und`, `$${prices.etiqueta}`]
+      ];
+
+      autoTable(doc, {
+        startY: 50,
+        head: [["Insumo", "Cantidad (por bolsa)", "Costo Unitario ($)"]],
+        body: rawMaterialData,
+        theme: 'striped',
+      });
+
+      const finalY = (doc as any).lastAutoTable.finalY || 50;
+
+      const resultsData = [
+        ["Costo Producción 1 Bolsa", `$${totals.costPerBag.toLocaleString('es-CO', {maximumFractionDigits:2})}`],
+        [`Costo Total x ${numBags} Bolsas`, `$${totals.batchCost.toLocaleString('es-CO', {maximumFractionDigits:2})}`],
+        ["Precio Sugerido Venta", `$${totals.suggestedRetailPrice.toLocaleString('es-CO', {maximumFractionDigits:2})}`],
+        ["Ganancia por Bolsa", `$${totals.profitPerBag.toLocaleString('es-CO', {maximumFractionDigits:2})}`]
+      ];
+
+      autoTable(doc, {
+        startY: finalY + 10,
+        head: [["Métrica de Resultado", "Valor"]],
+        body: resultsData,
+        theme: 'grid',
+        headStyles: { fillColor: [16, 185, 129] }
+      });
+
+      doc.save(`Calculadora_Costos_${new Date().toISOString().split('T')[0]}.pdf`);
+
+      const pdfBase64 = doc.output('datauristring');
+      
+      let csvData = "Insumo,Cantidad (por bolsa),Costo Unitario ($)\n";
+      rawMaterialData.forEach(row => {
+        csvData += `${row[0]},${row[1]},${row[2].replace('$', '')}\n`;
+      });
+      csvData += "\nMétrica de Resultado,Valor\n";
+      resultsData.forEach(row => {
+        csvData += `${row[0]},${row[1].replace('$', '').replace(/\\./g, '')}\n`;
+      });
+
+      const result = await exportRecipeToDisk("calculadora-dinamica", csvData, pdfBase64);
+      
+      if (result.success) {
+        toast({
+          title: "Reporte Exportado Localmente",
+          description: "La calculadora dinámica ha guardado los datos localmente en formato CSV y PDF.",
+          variant: "default",
+        });
+      } else {
+        throw new Error(result.error);
+      }
+    } catch(err: any) {
+      console.error("Error al exportar a disco", err);
+      toast({
+        title: "Error al exportar",
+        description: err.message || "No se pudo guardar el archivo en el servidor local.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
   return (
     <div className="p-6 max-w-7xl mx-auto space-y-6">
       <div className="flex items-center justify-between">
@@ -104,9 +198,14 @@ export default function CalculatorPage() {
             Simulador de costos y márgenes para BIO-GENESIS
           </p>
         </div>
-        <Button className="bg-emerald-600 hover:bg-emerald-700">
-          <Save className="h-4 w-4 mr-2" /> Guardar Escenario
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={handleExportPDF} disabled={isExporting} className="text-emerald-700 border-emerald-300 hover:bg-emerald-50 dark:hover:bg-emerald-950">
+            <Printer className="h-4 w-4 mr-2" /> {isExporting ? "Exportando..." : "Imprimir PDF"}
+          </Button>
+          <Button className="bg-emerald-600 hover:bg-emerald-700">
+            <Save className="h-4 w-4 mr-2" /> Guardar Escenario
+          </Button>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
