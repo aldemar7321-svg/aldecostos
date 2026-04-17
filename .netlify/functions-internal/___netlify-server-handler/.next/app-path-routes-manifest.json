@@ -1,0 +1,18 @@
+{
+  "/_not-found/page": "/_not-found",
+  "/favicon.ico/route": "/favicon.ico",
+  "/capital-investment/page": "/capital-investment",
+  "/dashboard/page": "/dashboard",
+  "/finished-products/page": "/finished-products",
+  "/labor/page": "/labor",
+  "/inventory/page": "/inventory",
+  "/ai-assistant/page": "/ai-assistant",
+  "/overhead/page": "/overhead",
+  "/packaging/page": "/packaging",
+  "/page": "/",
+  "/recipes/[id]/page": "/recipes/[id]",
+  "/recipes/calculator/page": "/recipes/calculator",
+  "/recipes/page": "/recipes",
+  "/reports/page": "/reports",
+  "/transport/page": "/transport"
+}

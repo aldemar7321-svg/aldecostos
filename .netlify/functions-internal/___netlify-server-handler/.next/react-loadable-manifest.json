@@ -1,0 +1,48 @@
+{
+  "..\\node_modules\\jspdf\\dist\\jspdf.es.min.js -> canvg": {
+    "id": 34137,
+    "files": [
+      "static/chunks/bc98253f.587fa1fcffb871a4.js",
+      "static/chunks/121.7c3047ff94ec014b.js"
+    ]
+  },
+  "..\\node_modules\\jspdf\\dist\\jspdf.es.min.js -> dompurify": {
+    "id": 32831,
+    "files": [
+      "static/chunks/831.f7b7ac1e12d91406.js"
+    ]
+  },
+  "..\\node_modules\\jspdf\\dist\\jspdf.es.min.js -> html2canvas": {
+    "id": 52699,
+    "files": [
+      "static/chunks/ad2866b8.6b876e1655c11f64.js"
+    ]
+  },
+  "..\\node_modules\\next\\dist\\client\\index.js -> ../pages/_app": {
+    "id": 90472,
+    "files": [
+      "static/chunks/472.2c08b965bd9148e2.js"
+    ]
+  },
+  "..\\node_modules\\next\\dist\\client\\index.js -> ../pages/_error": {
+    "id": 99341,
+    "files": [
+      "static/chunks/341.06f444276664456a.js"
+    ]
+  },
+  "app\\reports\\page.tsx -> jspdf": {
+    "id": 26597,
+    "files": [
+      "static/chunks/164f4fb6-8c53b66861683101.js",
+      "static/chunks/913-717f7287b7a8207c.js"
+    ]
+  },
+  "app\\reports\\page.tsx -> jspdf-autotable": {
+    "id": 86087,
+    "files": [
+      "static/chunks/164f4fb6-8c53b66861683101.js",
+      "static/chunks/913-717f7287b7a8207c.js",
+      "static/chunks/87-51b6956f527c72f1.js"
+    ]
+  }
+}
