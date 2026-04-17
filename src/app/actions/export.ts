@@ -5,7 +5,8 @@ import path from 'path';
 export async function exportRecipeToDisk(recipeName: string, csvData: string, pdfBase64: string) {
   try {
     const safeName = recipeName.toLowerCase().replace(/\s+/g, '-');
-    const folderPath = path.join(process.cwd(), 'recetas', safeName);
+    const basePath = process.env.NODE_ENV === 'production' ? '/tmp' : process.cwd();
+    const folderPath = path.join(basePath, 'recetas', safeName);
     
     // Crear carpeta
     await fs.mkdir(folderPath, { recursive: true });
@@ -29,7 +30,8 @@ export async function exportRecipeToDisk(recipeName: string, csvData: string, pd
 
 export async function getSavedCalculations(): Promise<{id: string, name: string, date: string, path: string}[]> {
   try {
-    const dirPath = path.join(process.cwd(), 'recetas');
+    const basePath = process.env.NODE_ENV === 'production' ? '/tmp' : process.cwd();
+    const dirPath = path.join(basePath, 'recetas');
     
     // Check if dir exists
     try {
